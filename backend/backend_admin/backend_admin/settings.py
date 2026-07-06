@@ -131,3 +131,29 @@ SIMPLE_JWT = {
 # JWT Cookie Settings
 JWT_COOKIE_SECURE = False
 JWT_COOKIE_NAME = 'refresh_token'
+
+
+# Cache settings
+CACHES = {
+    "default" : {
+        "BACKEND" : "django_redis.cache.RedisCache",
+        "LOCATION" : config('REDIS_URL', default='redis://127.0.0.1:6379/1'),
+        "OPTIONS" : {
+            "CLIENT_CLASS" : "django_redis.client.DefaultClient",
+            "SOCKET_CONNECT_TIMEOUT": 5,
+            "SOCKET_TIMEOUT" : 5,
+            "IGNORE_EXCEPTIONS" : True,
+        },
+        "TIMEOUT" : 3600,
+    }
+}
+
+# REST Framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES' : ('rest_framework_simplejwt.authentication.JWTAuthentication'),
+    'DEFAULT_PERMISSION_CLASSES' : ('rest_framework.permissions.IsAuthenticated',),
+    'DEFAULT_THROTTLE_CLASSES' : [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ]
+}
