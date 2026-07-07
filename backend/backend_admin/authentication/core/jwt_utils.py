@@ -126,7 +126,7 @@ class TokenManager:
     def blacklist_all_user_tokens(user_id):
         """Blacklist all token for a specific user"""
         try:
-            redis_client = TokenManager._get_redis_client()
+            redis_client = TokenManager._get_redis_connection()
             user_tokens_key = f"user_tokens:{user_id}"
 
             # Get all active tokens for the user
