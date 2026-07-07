@@ -1,3 +1,6 @@
+from sys import exception
+from tkinter.constants import NO
+
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from datetime import datetime, timedelta
@@ -77,6 +80,63 @@ class TokenManager:
                 logger.warning(f"Token refresh attempted for non-existent user Id: {user_id}")
             if not user.is_active:
                 logger.warning(f"Token refresh attempted for inactive user: {user.email}")
+                TokenManager.blacklist_token(jti)
+                raise TokenError("user is inactive")
+            
+            if settings.SIMPLE_JWT.get('ROTATE_REFRESH_TOKENS', True):
+                TokenManager.blacklist_token(jti)
+            # Generate new tokens 
+            return TokenManager.generate_tokens(user)
+        except TokenError as e:
+            logger.warning(f"Token refresh error: {str(e)}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error during token refresh")
+            raise TokenError(f"Token refresh failed: {str(e)}")
+        
+    @staticmethod
+    def validate_token(token_string):
+        """Validate token without using the database"""
+        try:
+            unverified = jwt.decode(token_string, options = {"verify_signature":False})
+            alg = unverified.get('alg',settings.SIMPLE_JWT.get('ALGORITHM','HS256'))
+            decoded = jwt.decode(
+                token_string, 
+                settings.SIMPLE_JWT.get('SIGNING_KEY',settings.SECRET_KEY),
+                algorithms=[alg],
+                options={"verify_signature":True}
+            )
+            token_type = decoded.get('token_type', decoded.get('type','access'))
+            user_id = decoded.get('user_id')
+            jti = decoded.get('jti')
+            if jti and TokenManager.is_token_blacklisted(jti):
+                logger.warning(f"Attempt to use blacklisted token with JTI: {jti}")
+                return False, None, None
+            exp = decoded.get('exp',0)
+            if exp < time.time():
+                logger.debug(f"Token expired at {datetime.fromtimestamp(exp).isoformat()}")
+                return False, None, None
+            return True, user_id, token_type
+
+        except jwt.PyJWTError as e:
+            logger.debug(f"Token validation error: {str(e)}")
+            return False, None, None            
+
+    @staticmethod
+    def blacklist_token(jti):
+        """Blacklist a token by JTI"""
+        if not jti:
+            return False
+        try:
+            redis_client = TokenManager._get_redis_connection()
+            blacklist_key = f"blacklisted_token: {jti}"
+            timeout = settings.SIMPLE_JWT.get('BLACKLIST_TIMEOUT', 86400)
+            redis_client.setex(blacklist_key, timeout, "1")
+            return True
+        except Exception as e:
+            logger.error(f"Error blacklisting token in Redis: {str(e)}")
+            return False
+    
 
     @staticmethod
     def is_token_blacklisted(jti):
