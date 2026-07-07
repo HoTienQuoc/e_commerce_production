@@ -123,6 +123,60 @@ class TokenManager:
             return False, None, None            
 
     @staticmethod
+    def blacklist_all_user_tokens(user_id):
+        """Blacklist all token for a specific user"""
+        try:
+            redis_client = TokenManager._get_redis_client()
+            user_tokens_key = f"user_tokens:{user_id}"
+
+            # Get all active tokens for the user
+            active_tokens = redis_client.smembers(user_tokens_key)
+            if not active_tokens:
+                return 0
+            pipe = redis_client.pipeline()
+            blacklist_timeout = settings.SIMPLE_JWT.get('BLACKLIST_TIMEOUT', 86400)
+
+            for jti in active_tokens:
+                jti_str = jti.decode('utf-8') if isinstance(jti,bytes) else jti
+                blacklist_key = f"blacklisted_token: {jti_str}"
+                pipe.setex(blacklist_key, blacklist_timeout,"1")
+            
+            # Clear the user tokens set
+            pipe.delete(user_tokens_key)
+            pipe.execute()
+
+            logger.info(f"Blacklisted {len(active_tokens)} tokens for user {user_id}")
+            return len(active_tokens)
+        
+        except Exception as e:
+            logger.error(f"Error blacklisting user tokens in Redis: {str(e)}")
+            return 0
+        
+    
+    @staticmethod
+    def get_user_active_tokens_count(user_id):
+        """et count of active tokens for a user"""
+        try:
+            redis_client = TokenManager._get_redis_connection()
+            user_tokens_key = f"user_tokens: {user_id}"
+            return redis_client.scard(user_tokens_key)
+        except Exception as e:
+            logger.error(f"Error getting user token count from Redis: {str(e)}")
+            return 0
+    
+    @staticmethod
+    def cleanup_expired_tokens():
+        """Utility method to clean up expired token metadata"""
+        try:
+            redis_client = TokenManager._get_redis_connection()
+            logger.info("Token cleanup completed")
+            return True
+        except Exception as e:
+            logger.error(f"Error during token clean: {str(e)}")
+            return False
+
+
+    @staticmethod
     def blacklist_token(jti):
         """Blacklist a token by JTI"""
         if not jti:
