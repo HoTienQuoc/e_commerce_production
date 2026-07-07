@@ -43,6 +43,54 @@ class TokenManager:
 
             refresh_expiry = settings.SIMPLE_JWT.get('REFRESH_TOKEN_LIFETIME', timedelta(days=14))
 
+            TokenManager._store_token_metadata(user.id,jti, refresh_expiry.total_seconds())
+
+            return {
+                'access_token' : str(access_token),
+                'refresh_token' : str(refresh),
+                'token_type' : 'Bearer',
+                'expires_in' : int(access_expiry.total_seconds()),
+                'refresh_expires_in' : int(refresh_expiry.total_seconds()),
+                'user_id' : user.id,
+                'issued_at' : int(time.time())
+            }
+        except Exception as e:
+            logger.error(f"Failed to generate tokens for user {user.id}: {str(e)}")
+            raise
+
+    @staticmethod
+    def refresh_tokens(refresh_token):
+        """Refresh tokens with validation and optional rotation"""
+        try:
+            token = RefreshToken(refresh_token)
+            jti = token.get('jti')
+            if not jti or TokenManager.is_token_blacklisted(jti):
+                logger.warning(f"Attempt to use blacklisted token with JTI: {jti}")
+                raise TokenError("Token is blacklisted")
+            
+            # Get user from token
+            user_id = token.get('user_id')
+            from authentication.models import CustomUser
+            try:
+                user = CustomUser.objects.get(id = user_id)
+            except CustomUser.DoesNotExist:
+                logger.warning(f"Token refresh attempted for non-existent user Id: {user_id}")
+            if not user.is_active:
+                logger.warning(f"Token refresh attempted for inactive user: {user.email}")
+
+    @staticmethod
+    def is_token_blacklisted(jti):
+        """Check if a token is blacklisted"""
+        if not jti:
+            return False
+        try:
+            redis_client = TokenManager._get_redis_connection()
+            blacklist_key = f"blacklisted_token: {jti}"
+            return redis_client.exists(blacklist_key) > 0
+        except Exception as e:
+            logger.error(f"Error checking token blacklist in Redis: {str(e)}")
+            return False
+
     @staticmethod
     def _store_token_metadata(user_id, jti, expiry_seconds):
         """Store token metadata in Redis for blacklisting"""
