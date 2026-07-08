@@ -12,6 +12,8 @@ from authentication.serializers import UserSerializer
 from authentication.core.jwt_utils import TokenManager
 from authentication.models import CustomUser
 from rest_framework_simplejwt.tokens import RefreshToken
+from authentication.verification.tasks import send_verification_email_task
+from backend.backend_admin.authentication import serializers
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +42,7 @@ class AuthenticationService:
                 return False, {"success":False, "error":", ".join(e.messages)}, 400
 
             # create new user
-            user = CustomUser.objects.create_user(email = email, password = password, is_verified = False)
+            user = CustomUser.objects.create_user(email = email, password = password, is_verified = False) # pyright: ignore[reportAttributeAccessIssue]
 
             if first_name:
                 user.first_name = first_name
@@ -54,7 +56,43 @@ class AuthenticationService:
                 user.phone_number = phone_number
                 user.save(update_fields = ['phone_number'])
 
-            
+            # Queue verification email for new users asynchronously
+            if user.email and settings.REQUIRE_EMAIL_VERIFICATION:
+                try:
+                    send_verification_email_task.delay(user.id) # pyright: ignore[reportCallIssue]
+                    logger.info(f"Queued verification email for new user: {user.email}")
+                except Exception as e:
+                    logger.error(f"Failed to queue verification email task for user {user.id}: {str(e)}")
+
+            # Serialize user data with request context
+            context = {}
+            if request:
+                context['request'] = request
+            serializers = UserSerializer(user, context= context)
+
+            # Generate tokens
+            tokens = TokenManager.generate_tokens(user)
+
+            logger.info(f"Registration successful for user: {user.email}")
+
+            # Return successful response data
+            return True, {
+                "success" : True,
+                "data" : {
+                    "user" : serializers.data,
+                    "tokens" : tokens,
+                    "is_new_user" : True,
+                    "email_verified" : user.is_verified
+                }
+            }, 201
+        
+        except Exception as e:
+            logger.error(f"Registration error: {str(e)}")
+            return False, {
+                "success": False,
+                "error": "Registration failed. Please try again"
+            }, 400
+
             
 
 
