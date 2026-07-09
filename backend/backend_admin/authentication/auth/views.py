@@ -38,7 +38,8 @@ class UserRegistrationView(BaseAPIView):
                 phone_number=phone_number,
                 first_name=first_name,
                 last_name=last_name,
-                request=request.META,
+                request_meta=request.META,
+                request=request
             )
 
             # create response object
@@ -66,5 +67,15 @@ class UserRegistrationView(BaseAPIView):
             logger.error(f"Registration error: {str(e)}")
             logger.error(traceback.format_exc())
             return Response(standardized_response(success=False, error="Registration failed. Please try again."),status=status.HTTP_400_BAD_REQUEST)
+        
 
+class UserLoginView(BaseAPIView):
+    permission_classes = [AllowAny]
+    throttle_classes = [AnonRateThrottle]
+
+    def post(self, request):
+        try:
+            email = request.data.get('email')
+            password = request.data.get('password')
+            device_info = request.data.get('device_info', {})
             

@@ -1,4 +1,5 @@
 import logging
+from tkinter.constants import NO
 import traceback
 
 from django.utils import timezone
@@ -93,6 +94,43 @@ class AuthenticationService:
                 "error": "Registration failed. Please try again"
             }, 400
 
+    @staticmethod
+    def login(email,password, device_info=None, request_meta=None, request=None):
+        """Handle user login with email and password"""
+        if not email or not password:
+            return False, {
+                "success":False, "error":"Email and password are required."
+            }, 400
+        if request_meta:
+            logger.info(f"Login attempt from IP: {request_meta.get('REMOTE_ADDR')}, User-Agent: {request_meta.get('HTTP_USER_AGENT')}")
+        try:
+            # check for account lockout
+            if cache.get(f"account_lockout: {email}"):
+                logger.warning(f"Login attempt for locked account: {email}")
+                return False, {
+                    "success": False,
+                    "error" : "Account temporarily locked due to multiple failed attempts. Try again later.",
+                    "lockout": True,
+                }, 403
+            
+            # check if user exists first
+            try:
+                user_exists = CustomUser.objects.filter(email = email).exists()
+
+                if not user_exists:
+                    logger.warning(f"Login attempt for non-existent email: {email}")
+                    failed_attempts = cache.get(f"failed_login: {email}", 0) + 1
+                    cache.set(f"failed_logins: {email}", failed_attempts, timeout=1800)
+                    return False,{
+                        "success" : False,
+                        "error": "Invalid email or password"
+                    }, 401
+            except Exception as user_check_error:
+                logger.error(f"Error checking user existence: {str(user_check_error)}")
+                return False, {
+                    "success" : False,
+                    "error" : "Database error occurred"
+                }, 500
             
 
 
