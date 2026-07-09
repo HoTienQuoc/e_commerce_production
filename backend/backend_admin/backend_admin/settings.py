@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import DEFAULT
 from decouple import config
 from datetime import timedelta
 
@@ -167,3 +168,12 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 
+FRONTEND_URL = 'http://127.0.0.1/api'
+
+# Email verification settings
+REQUIRE_EMAIL_VERIFICATION = True
+EMAIL_VERIFICATION_TIMEOUT = 3600*24*3 # 3 days verification link
+APP_NAME = 'backend_admin'
+DEFAULT_FROM_EMAIL = 'backend_admin <hotienquoc0429@gmail.com>'
+
+AUTH_USER_MODEL = 

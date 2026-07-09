@@ -1,5 +1,6 @@
 import logging
 import re
+from sre_constants import SUCCESS
 import stat
 import time
 from token import tok_name
@@ -78,4 +79,38 @@ class UserLoginView(BaseAPIView):
             email = request.data.get('email')
             password = request.data.get('password')
             device_info = request.data.get('device_info', {})
+
+            success, response_data, status_code = AuthenticationService.login(
+                email=email, 
+                password=password,
+                device_info= device_info,
+                request_meta=request.META,
+                request=request
+            )
+
+            # create response object
+            response = Response(standardized_response(**response_data), status = status_code)
+
+            if success and status_code in (200, 201) and settings.JWT_COOKIE_SECURE:
+                tokens = response_data.get('data', {}).get('tokens', {})
+                if 'refresh_token' in tokens and 'refresh_expires_in' in tokens:
+                    response.set_cookie(
+                        key = settings.JWT_COOKIE_NAME,
+                        value=tokens['refresh_token'],
+                        expires= timezone.now() + timedelta(seconds=['refresh_expires_in']), # pyright: ignore[reportArgumentType]
+                        secure=True,
+                        httponly=True,
+                        samesite='Strict',
+                        path='/',
+                        domain=settings.SESSION_COOKIE_DOMAIN
+                    )
+
+                # Set CSRF token
+                if success:
+                    get_token(request)
+                return response
+        except Exception as e:
+            logger.error(f"Login error: {str(e)}")
+            logger.error(traceback.format_exc())
+            return Response(standardized_response(success=False, error="An unexpected error occured. Please try again."),status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
