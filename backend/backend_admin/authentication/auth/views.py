@@ -1,9 +1,4 @@
 import logging
-import re
-from sre_constants import SUCCESS
-import stat
-import time
-from token import tok_name
 import traceback
 from django.utils import timezone
 from django.conf import settings
@@ -52,7 +47,7 @@ class UserRegistrationView(BaseAPIView):
                     response.set_cookie(
                         key = settings.JWT_COOKIE_NAME,
                         value=tokens['refresh_token'],
-                        expires= timezone.now() + timedelta(seconds=['refresh_expires_in']), # pyright: ignore[reportArgumentType]
+                        expires= timezone.now() + timedelta(seconds=tokens['refresh_expires_in']),
                         secure=True,
                         httponly=True,
                         samesite='Strict',
@@ -97,7 +92,7 @@ class UserLoginView(BaseAPIView):
                     response.set_cookie(
                         key = settings.JWT_COOKIE_NAME,
                         value=tokens['refresh_token'],
-                        expires= timezone.now() + timedelta(seconds=['refresh_expires_in']), # pyright: ignore[reportArgumentType]
+                        expires= timezone.now() + timedelta(seconds=tokens['refresh_expires_in']),
                         secure=True,
                         httponly=True,
                         samesite='Strict',
@@ -113,4 +108,43 @@ class UserLoginView(BaseAPIView):
             logger.error(f"Login error: {str(e)}")
             logger.error(traceback.format_exc())
             return Response(standardized_response(success=False, error="An unexpected error occured. Please try again."),status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class TokenRefreshView(BaseAPIView):
+    """Api endpoint for refreshing JWT tokens"""
+    permission_classes = [AllowAny]
+    throttle_classes = [AnonRateThrottle]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data.get('refresh_token')
+            if not refresh_token and settings.JWT_COOKIE_SECURE:
+                refresh_token = request.COOKIES.get(settings.JWT_COOKIE_NAME)
             
+            success, response_data, status_code = AuthenticationService.refresh_token(refresh_token)
+
+            response = Response(standardized_response(**response_data), status = status_code) # pyright: ignore[reportArgumentType]
+
+            if success and status_code in (200, 201) and settings.JWT_COOKIE_SECURE:
+                tokens = response_data["data"]                
+                if "refresh_token" in tokens and "refresh_expires_in" in tokens: # pyright: ignore[reportOperatorIssue]
+                    response.set_cookie(
+                        key = settings.JWT_COOKIE_NAME,
+                        value = tokens['refresh_token'], # pyright: ignore[reportArgumentType] # pyright: ignore[reportIndexIssue] # type: ignore
+                        expires= timezone.now() + timedelta(seconds=tokens['refresh_expires_in']), # pyright: ignore[reportArgumentType] # pyright: ignore[reportIndexIssue] # type: ignore
+                        secure=True,
+                        httponly=True,
+                        samesite='Strict',
+                        path='/',
+                        domain=settings.SESSION_COOKIE_DOMAIN
+                    )
+
+                # Set CSRF token
+                if success:
+                    get_token(request)
+                return response
+        
+        except Exception as e:
+            logger.error(f"Token refresh error: {str(e)}")
+            logger.error(traceback.format_exc())
+            return Response(standardized_response(success=False, error="An unexpected error occured during token refresh."),status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

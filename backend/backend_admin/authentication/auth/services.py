@@ -1,5 +1,4 @@
 import logging
-from tkinter.constants import NO
 import traceback
 
 from django.utils import timezone
@@ -222,5 +221,27 @@ class AuthenticationService:
             },
 
 
-        
+    @staticmethod
+    def refresh_token(refresh_token):
+        """Refresh an authentication token"""
+        if not refresh_token:
+            return False, {"success": False, "error": "Refresh Token is required"}, 400
+        try:
+            tokens= TokenManager.refresh_tokens(refresh_token)
+            return True, {
+                "success": True,
+                "data": {
+                    'access_token': tokens['access_token'],
+                    "refresh_token": tokens['refresh_token'],
+                    'token_type': tokens['token_type'],
+                    'expires_in': tokens['expires_in']
+                }
+            }, 200
+        except Exception as e:
+            logger.error(f"Token refresh error: {str(e)}")
+            return False, {
+                "success": False,
+                "error": "An error occurred during token refresh."
+            }, 500
+
 
