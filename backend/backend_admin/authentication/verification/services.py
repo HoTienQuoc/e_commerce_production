@@ -61,3 +61,34 @@ class EmailVerificationService:
         """Verify email with token"""
         is_valid, user, error = TokenVerifier.verify_token(uidb64, token)
         
+        if not is_valid:
+            logger.warning(f"Invalid token verification attempt with uidb64")
+            return False, {"success":False, "error":error or "Invalid verification link. Please request a new one."}, 400
+        
+        try:
+            from django.db import transaction
+            with transaction.atomic():
+                if not user.is_verified:  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
+                    user.is_verified = True # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
+                    user.save(update_fields=['is_verified']) # pyright: ignore[reportOptionalMemberAccess]
+                else:
+                    logger.info(f"Email verification attempt for already verified user: {user.id} ({user.email})") # pyright: ignore[reportOptionalMemberAccess, reportAttributeAccessIssue]
+            
+            cache_key = EmailVerificationService.get_verification_cache_key(user.id) # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
+            cache.set(cache_key, True, timeout = 3600)
+            logger.info(f"Updated verification cache for user {user.id} : set to True") # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
+
+            return True,{
+                "success": True,
+                "message": "Email verification successful." 
+            }, 200
+        
+        except Exception as e:
+            logger.error(f"Error during verification: {str(e)}")
+            return True, {
+                "success": False,
+                "error": "An error occured during verification. Please try again"
+            }, 500
+        
+
+

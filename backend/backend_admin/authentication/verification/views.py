@@ -26,3 +26,23 @@ class VerifyEmailView(BaseAPIView):
 
             if not uidb64 or not token:
                 return Response(standardized_response(success=False, error = "Missing required fields"), status=status.HTTP_400_BAD_REQUEST)
+
+            success, response_data, status_code = EmailVerificationService.verify_email(uidb64=uidb64, token=token)
+
+            return Response(
+                standardized_response(**response_data), # pyright: ignore[reportArgumentType]
+                status=status_code
+            )
+        except Exception as e:
+            logger.error(f"Email verification error: {str(e)}")
+            logger.error(traceback.format_exc())
+            return Response(
+                standardized_response(
+                    success=False,
+                    error="Email verifcation failed. Please try again"
+                ),
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    def get(self, request):
+        return self.post(request)
