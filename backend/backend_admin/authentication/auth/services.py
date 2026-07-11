@@ -245,3 +245,11 @@ class AuthenticationService:
             }, 500
 
 
+    @staticmethod
+    def validate_token(token, user):
+        """Validate a token and check if it belongs to the user"""
+        is_valid, user_id, token_type = TokenManager.validate_token(token)
+
+        if not is_valid or user_id != user.id:
+            logger.warning(f"Token validation failed: expected user {user.id}, got {user_id}")
+            return False, {"success":False, "error":"Token validation failed"},401

@@ -125,7 +125,7 @@ class TokenRefreshView(BaseAPIView):
             response = Response(standardized_response(**response_data), status = status_code) # pyright: ignore[reportArgumentType]
 
             if success and status_code in (200, 201) and settings.JWT_COOKIE_SECURE:
-                tokens = response_data["data"]                
+                tokens = response_data.get('data', {}).get('tokens', {}) # pyright: ignore[reportAttributeAccessIssue]
                 if "refresh_token" in tokens and "refresh_expires_in" in tokens: # pyright: ignore[reportOperatorIssue]
                     response.set_cookie(
                         key = settings.JWT_COOKIE_NAME,
@@ -148,3 +148,14 @@ class TokenRefreshView(BaseAPIView):
             logger.error(traceback.format_exc())
             return Response(standardized_response(success=False, error="An unexpected error occured during token refresh."),status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class ValidateTokenView(BaseAPIView):
+    """Token validation"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        # Get token from Authorization header
+        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+        if auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
