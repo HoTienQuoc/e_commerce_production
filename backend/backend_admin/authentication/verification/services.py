@@ -3,6 +3,8 @@ import traceback
 from django.core.cache import cache
 from django.contrib.auth import get_user_model
 
+from backend.backend_admin.authentication.verification.tokens import TokenVerifier
+
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
@@ -53,3 +55,9 @@ class EmailVerificationService:
                 "data" : {"is_verified": user.is_verified},
                 "message" : "Could not check latest status, using existing information"
             }, 200
+
+    @staticmethod
+    def verify_email(uidb64, token):
+        """Verify email with token"""
+        is_valid, user, error = TokenVerifier.verify_token(uidb64, token)
+        

@@ -273,3 +273,22 @@ class AuthenticationService:
                 'email_verified' : is_verified
             }
         }, 200
+    
+    @staticmethod
+    def logout(user, refresh_token = None):
+        """Handle user logout, invalidating tokens as needed"""
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                jti = token.get('jti')
+                if jti:
+                    TokenManager.blacklist_token(jti)
+                    logger.info(f"Token blacklisted during logout: {jti}")
+            except Exception as e:
+                logger.warning(f"Error blacklisting token during logout: {str(e)}")
+        
+        logger.info(f"User logged out: {user.id}")
+        return True, {
+            "success": True,
+            "message": "Successfully logged out"
+        }, 200

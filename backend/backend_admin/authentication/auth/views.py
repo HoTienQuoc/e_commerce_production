@@ -166,6 +166,45 @@ class ValidateTokenView(BaseAPIView):
                 status = status_code
             )
         return Response(
-            standardized_response(**response_data), # pyright: ignore[reportUnboundVariable]
+            standardized_response(success=False, error= "No Token Provided"),
             status = status.HTTP_400_BAD_REQUEST
         )
+
+class LogoutView(BaseAPIView):
+    """Logout endpoint that invalidates tokens"""
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        try:
+            user = request.user
+            refresh_token = None
+
+            if 'refresh_token' in request.data:
+                refresh_token = request.data.get('refresh_token')
+
+            elif settings.JWT_COOKIE_SECURE:
+                refresh_token = request.COOKIES.get(settings.JWT_COOKIE_NAME)
+            success, response_data, status_code = AuthenticationService.logout(user,refresh_token)
+
+            response = Response(standardized_response(**response_data),status = status_code) # pyright: ignore[reportArgumentType]
+
+            if settings.JWT_COOKIE_SECURE:
+                response.delete_cookie(
+                    key = settings.JWT_COOKIE_NAME,
+                    path='/',
+                    domain= settings.SESSION_COOKIE_DOMAIN
+                )
+            return response
+        
+        except Exception as e:
+            logger.error(f"Logout error: {str(e)}")
+            logger.error(traceback.format_exc())
+
+            response = Response(standardized_response(success=True, message="Logout proccessed"),status=status.HTTP_200_OK)
+
+            if settings.JWT_COOKIE_SECURE:
+                response.delete_cookie(
+                    key = settings.JWT_COOKIE_NAME,
+                    path='/',
+                    domain= settings.SESSION_COOKIE_DOMAIN
+                )
+            return response
