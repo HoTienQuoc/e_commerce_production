@@ -253,3 +253,23 @@ class AuthenticationService:
         if not is_valid or user_id != user.id:
             logger.warning(f"Token validation failed: expected user {user.id}, got {user_id}")
             return False, {"success":False, "error":"Token validation failed"},401
+        
+        from authentication.verification.services import EmailVerificationService
+
+        success, verification_response, _ = EmailVerificationService.check_verification_status(user)
+
+        if not success:
+            logger.error(f"Error checking verification")
+            if_verified = user.is_verified
+        else:
+            is_verified = verification_response.get('data', {}).get('is_verified', user.is_verified) # pyright: ignore[reportAttributeAccessIssue]
+        logger.info(f"Token validation retrieved verification status for user {user.id}: is_verified={is_verified}")
+
+        return True, {
+            "success": True,
+            "data" : {
+                'valid' : True,
+                'user_id' : user.id,
+                'email_verified' : is_verified
+            }
+        }, 200

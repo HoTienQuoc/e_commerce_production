@@ -159,3 +159,13 @@ class ValidateTokenView(BaseAPIView):
         auth_header = request.META.get('HTTP_AUTHORIZATION', '')
         if auth_header.startswith('Bearer '):
             token = auth_header.split(' ')[1]
+            success, response_data, status_code = AuthenticationService.validate_token(token, user)
+
+            return Response(
+                standardized_response(**response_data), # pyright: ignore[reportArgumentType]
+                status = status_code
+            )
+        return Response(
+            standardized_response(**response_data), # pyright: ignore[reportUnboundVariable]
+            status = status.HTTP_400_BAD_REQUEST
+        )
