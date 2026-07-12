@@ -5,6 +5,7 @@ from django.core.cache import cache
 from django.contrib.auth import get_user_model
 
 from backend.backend_admin.authentication.auth.services import send_verification_email_task
+from backend.backend_admin.authentication.verification.tasks import send_password_reset_email_task
 from backend.backend_admin.authentication.verification.tokens import TokenVerifier
 
 User = get_user_model()
@@ -156,4 +157,23 @@ class PasswordResetService:
 
             try:
                 user = User.objects.get(email = email)
-                
+                # Send email in the background using celery 
+                send_password_reset_email_task.delay(user.id) # pyright: ignore[reportCallIssue, reportAttributeAccessIssue]
+                logger.info(f"Password reset email task queued for user {user.email}") # pyright: ignore[reportAttributeAccessIssue]
+            except User.DoesNotExist:
+                pass
+
+            cache.set(rate_key, True, timeout = 300)
+
+            return True, {
+                "success" : True,
+                "message" : "If an account exists with this email, a password reset link will be sent."
+            }, 200
+        
+        except Exception as e:
+            logger.error(f"Password reset error: {str(e)}")
+            return True, {
+                "success": True,
+                "message": "If an account exists with this email, a password reset link will be sent."
+            }, 200
+        

@@ -10,7 +10,7 @@ from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from authentication.core.base_view import BaseAPIView
 from authentication.core.response import standardized_response
 
-from .services import EmailVerificationService, User
+from .services import EmailVerificationService, PasswordResetService, User
 
 logger = logging.getLogger(__name__)
 
@@ -108,3 +108,19 @@ class PasswordResetView(BaseAPIView):
                     success=False,
                     error="Email is required"
                 ), status=status.HTTP_400_BAD_REQUEST)
+        
+            success, response_data, status_code = PasswordResetService.request_reset(email=email)
+
+            return Response(
+                standardized_response(**response_data), # pyright: ignore[reportArgumentType]
+                status=status_code
+            )
+
+        except Exception as e:
+            logger.error(f"Password reset error: {str(e)}")
+            logger.error(traceback.format_exc())
+
+            return Response(
+                standardized_response(success=True, message="If an account exists with this email, a password reset link will be sent."),
+                status=status.HTTP_200_OK
+            )
