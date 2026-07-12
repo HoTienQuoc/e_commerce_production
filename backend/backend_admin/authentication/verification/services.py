@@ -1,8 +1,10 @@
 import logging
+from math import e
 import traceback
 from django.core.cache import cache
 from django.contrib.auth import get_user_model
 
+from backend.backend_admin.authentication.auth.services import send_verification_email_task
 from backend.backend_admin.authentication.verification.tokens import TokenVerifier
 
 User = get_user_model()
@@ -89,6 +91,46 @@ class EmailVerificationService:
                 "success": False,
                 "error": "An error occured during verification. Please try again"
             }, 500
-        
+    
+    @staticmethod
+    def send_verification_email(user):
+        """Send Verification email to user"""
+        try:
+            if user.is_verified:
+                return True, {
+                    "success" : True, 
+                    "message" : "Email is already verified."
+                }, 200
+            rate_key = f"verification_email_{user.id}"
+            if cache.get(rate_key):
+                return False, {
+                    "success": False,
+                    "error": "Please wait before requesting another verification email."
+                }, 429
+            
+            send_verification_email_task.delay(user.id) # pyright: ignore[reportCallIssue]
 
+            cache.set(rate_key, True, timeout=300)
+            logger.info(f"Verification email task queued for {user.email}")
+
+            return True, {
+                "success": True,
+                "message": "A verification link has been sent to your email"
+            }, 200
+        
+        except Exception as e:
+            logger.error(f"Error queueing verification email: {str(e)}")
+
+            return False, {
+                "success": False,
+                "error": "Failed to send verification email. Please try again later."
+            }, 500
+        
+        except Exception as e: # pyright: ignore[reportUnusedExcept]
+            logger.error(f"Send verification email error: {str(e)}")
+            return False,{
+                "success":False,
+                "error": "Failed to send verification email. Please try again later."
+            },400
+        
 

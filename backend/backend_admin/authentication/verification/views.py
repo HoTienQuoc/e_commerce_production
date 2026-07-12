@@ -46,3 +46,25 @@ class VerifyEmailView(BaseAPIView):
     
     def get(self, request):
         return self.post(request)
+    
+class SendVerificationEmailView(BaseAPIView):
+    """Endpoint for sending verification email"""
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
+
+    def post(self, request):
+        try:
+            success, response_data, status_code = EmailVerificationService.send_verification_email(request.user)
+
+            return Response(
+                standardized_response(**response_data), status = status_code # pyright: ignore[reportArgumentType]
+            )
+
+        except Exception as e:
+            logger.error(f"Send verification email error: {str(e)}")
+            logger.error(traceback.format_exc())
+
+            return Response(
+                standardized_response(success=False, error="Failed to send verification email. Please try again later."), status=status.HTTP_400_BAD_REQUEST
+            )
+        
