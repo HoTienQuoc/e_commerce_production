@@ -68,3 +68,28 @@ class SendVerificationEmailView(BaseAPIView):
                 standardized_response(success=False, error="Failed to send verification email. Please try again later."), status=status.HTTP_400_BAD_REQUEST
             )
         
+class CheckVerificationStatusView(BaseAPIView):
+    """Endpoint for checking verification status"""
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
+
+    def get(self, request):
+        try:
+            success, response_data, status_code = EmailVerificationService.check_verification_status(request.user)
+
+            logger.info(f"Verification status check for user {request.user.pk}: {response_data.get('data', {}).get('is_verified')}") # pyright: ignore[reportAttributeAccessIssue]
+
+            return Response(
+                standardized_response(**response_data), status = status_code # pyright: ignore[reportArgumentType]
+            )
+        
+        except Exception as e:
+            logger.error(f"Check verification status error: {str(e)}")
+            logger.error(traceback.format_exc())
+            return Response(
+                standardized_response(
+                    success=True,
+                    data = {'is_verified' : request.user.is_verified},
+                    message="Could not check latest status, using existing information"
+                ), status = status.HTTP_200_OK
+            )
