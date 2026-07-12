@@ -134,3 +134,26 @@ class EmailVerificationService:
             },400
         
 
+class PasswordResetService:
+    """Service class to handle password reset operations"""
+    @staticmethod
+    def request_reset(email):
+        """Request password reset for email"""
+        try:
+            if not email:
+                return False, {
+                    "success": False,
+                    "error": "Email is required"
+                }, 400
+            
+            rate_key = f"password_reset_{email}"
+
+            if cache.get(rate_key):
+                return True, {
+                    "success":True,
+                    "message":"If an account exists with this email, a password reset link will be sent"
+                }, 200
+
+            try:
+                user = User.objects.get(email = email)
+                

@@ -29,3 +29,30 @@ def send_verification_email_task(self, user_id:int):
     except Exception as e:
         logger.error(f"Failed to send verification email for user {user_id} on attempt {self.retries}: {e}")
         raise e
+
+
+
+
+
+
+@shared_task(
+    bind = True, 
+    autoretry_for = (Exception,), 
+    retry_kwargs = {'max_retries':3}, 
+    retry_backoff = True, 
+    retry_back_off_max = 60, 
+    name = "authentication.verification.send_password_reset_email"
+)
+
+def send_password_reset_email_task(self, user_id:int):
+    """celery task to send a password reset email."""
+    try:
+        user = User.objects.get(id = user_id)
+        if not user.is_verified: # pyright: ignore[reportAttributeAccessIssue]
+            logger.info(f"Executing password email task for user: {user.email}") # pyright: ignore[reportAttributeAccessIssue]
+            EmailService.send_password_reset_email(user)
+    except User.DoesNotExist:
+        logger.warning(f"User with ID {user_id} not found. Cannot send password reset email.")
+    except Exception as e:
+        logger.error(f"Failed to send password reset email for user {user_id} on attempt {self.retries}: {e}")
+        raise e

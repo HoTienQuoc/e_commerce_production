@@ -93,3 +93,18 @@ class CheckVerificationStatusView(BaseAPIView):
                     message="Could not check latest status, using existing information"
                 ), status = status.HTTP_200_OK
             )
+    
+class PasswordResetView(BaseAPIView):
+    """Endpoint for requesting password reset"""
+    permission_classes = [AllowAny]
+    throttle_classes = [AnonRateThrottle]
+
+    def post(self, request):
+        try:
+            email = request.data.get('email')
+
+            if not email:
+                return Response(standardized_response(
+                    success=False,
+                    error="Email is required"
+                ), status=status.HTTP_400_BAD_REQUEST)
