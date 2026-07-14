@@ -41,3 +41,31 @@ class UserProfileView(BaseAPIView):
     def put(self, request):
         """Update full user profile"""
         try:
+            success, response_data, status_code = ProfileService.update_profile(user=request.user, data=request.data, files=request.FILES, request=request)
+
+            return Response(
+                standardized_response(**response_data), status=status_code
+            )
+
+        except Exception as e:
+            logger.error(f"Profile update error: {str(e)}")
+            logger.error(traceback.format_exc())
+            return Response(
+                standardized_response(success=False, error="profile update failed"), status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def patch(self, request):
+        """Partial user profile"""
+        try:
+            success, response_data, status_code = ProfileService.update_profile(user=request.user, data=request.data, files=request.FILES, request=request)
+
+            return Response(
+                standardized_response(**response_data), status=status_code
+            )
+
+        except Exception as e:
+            logger.error(f"Profile patch error: {str(e)}")
+            logger.error(traceback.format_exc())
+            return Response(
+                standardized_response(success=False, error="profile update failed"), status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
