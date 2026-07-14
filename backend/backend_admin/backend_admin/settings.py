@@ -72,8 +72,12 @@ WSGI_APPLICATION = 'backend_admin.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": config('DB_NAME'),
+        "USER": config('DB_USER'),
+        "PASSWORD": config('DB_PASSWORD'),
+        "HOST": config('DB_HOST'),
+        "PORT": config('DB_HOST', cast=int),
     }
 }
 
@@ -176,4 +180,4 @@ EMAIL_VERIFICATION_TIMEOUT = 3600*24*3 # 3 days verification link
 APP_NAME = 'backend_admin'
 DEFAULT_FROM_EMAIL = 'backend_admin <hotienquoc0429@gmail.com>'
 
-AUTH_USER_MODEL = 
+AUTH_USER_MODEL = 'authentication.CustomUser'
