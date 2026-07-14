@@ -1,3 +1,4 @@
+from email.policy import default
 from pathlib import Path
 from unittest.mock import DEFAULT
 from decouple import config
@@ -181,3 +182,12 @@ APP_NAME = 'backend_admin'
 DEFAULT_FROM_EMAIL = 'backend_admin <hotienquoc0429@gmail.com>'
 
 AUTH_USER_MODEL = 'authentication.CustomUser'
+
+# Email settings
+# For Gmail SMTP
+EMAIL_BACKEND = 'django.core.email.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT=587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='your-gmail@gmail.com')
+EMAIL_HOST_PASSWORD=config('EMAIL_HOST_PASSWORD', default='')
