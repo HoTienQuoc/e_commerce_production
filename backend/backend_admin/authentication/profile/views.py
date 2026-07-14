@@ -41,4 +41,3 @@ class UserProfileView(BaseAPIView):
     def put(self, request):
         """Update full user profile"""
         try:
-            
