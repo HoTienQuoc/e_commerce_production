@@ -1,12 +1,16 @@
 import logging
 from math import e
 import traceback
+from xml.dom import ValidationErr
 from django.core.cache import cache
 from django.contrib.auth import get_user_model
 
 from backend.backend_admin.authentication.auth.services import send_verification_email_task
+from backend.backend_admin.authentication.core.jwt_utils import TokenManager
 from backend.backend_admin.authentication.verification.tasks import send_password_reset_email_task
 from backend.backend_admin.authentication.verification.tokens import TokenVerifier
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -176,4 +180,37 @@ class PasswordResetService:
                 "success": True,
                 "message": "If an account exists with this email, a password reset link will be sent."
             }, 200
+    
+    @staticmethod
+    def confirm_reset(uidb64, token, new_password):
+        """Complete password reset with token and new password"""
+
+        is_valid, user, error = TokenVerifier.verify_token(uidb64, token)
+
+        if not is_valid:
+            return False, {
+                "success": False,
+                "error": error or "Invalid password reset link. Please request a new one."
+            },400
         
+        try:
+            validate_password(new_password, user = user)
+        except ValidationError as e:
+            return False, {
+                "success": False,
+                "error": ", ".join(e.messages)
+            }, 400
+        
+        # update password
+        user.set_password(new_password) # pyright: ignore[reportOptionalMemberAccess]
+        user.save(update_fields=['password']) # pyright: ignore[reportOptionalMemberAccess]
+
+        logger.info(f"Password reset completed for user {user.id} via link") # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
+
+        TokenManager.blacklist_all_user_tokens(user.id) # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
+
+        return True, {
+            "success": True,
+            "message": "Password has been reset successfully. You can now log in with your new password."
+        }, 200
+    
