@@ -7,6 +7,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from authentication.core.jwt_utils import TokenManager
 from authentication.serializers import UserSerializer
+from backend.backend_admin.authentication import serializers
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,74 @@ class ProfileService:
                 ProfileService._process_profile_picture_file(user, files['profile_picture'])
             
             elif 'image_data' in data:
+                ProfileService._proccess_image_data(user, data.get('image_data'))
+            
+            # Handle password change if provided
+            if 'current_password' in data and 'new_password' in data:
+                result = ProfileService._process_password_change(user, data.get('current_password'), data.get('new_password'))
+                
+                if not result['success']:
+                    return False, {
+                        "success": False,
+                        "error":result['error']
+                    }, 400
+                
+            safe_data = {k: v for k, v in data.items() if k not in ['profile_picture', 'current_password', 'new_password']}
+
+            context = {'request': request} if request else {}
+            serializers = UserSerializer(user, data=safe_data, partial=True, context=context)
+
+            if serializers.is_valid():
+                serializers.save()
+                updated_user = type(user).objects.get(pk=user.pk)
+                updated_serializer = UserSerializer(updated_user, context=context)
+
+                return True, {
+                    "success": True,
+                    "data":updated_serializer.data,
+                    "message":"Profile updated successfully"
+                }, 200
+            return False,{
+                "success":False,
+                "error": serializers.errors
+            }, 400
+        except Exception as e:
+            logger.error(f"Profile update error: {str(e)}")
+            return False,{
+                "success": False,
+                "error": "Failed to update profile"
+            }, 400
+    
+    @staticmethod
+    def _process_password_change(user, current_password, new_password):
+        """Proccess password change request"""
+        # Verify current password
+        if not user.check_password(current_password):
+            return {
+                "success": False,
+                "error": "Current password is incorrect"
+            }
+
+        # Validate new password
+        try:
+            validate_password(new_password, user=user)
+        except ValidationError as e:
+            return {
+                'success':False,
+                'error':', '.join(e.messages)
+            }
+        
+        user.set_password(new_password)
+        user.save(update_fields = ['password'])
+
+        logger.info(f"Password changed for user {user.id}")
+
+        # Invalidate all existing refresh tokens for security
+        TokenManager.blacklist_all_user_tokens(user.id)
+        
+        return {
+            'success': True,
+        }
 
 
     @staticmethod
