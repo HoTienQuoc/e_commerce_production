@@ -5,10 +5,10 @@ from xml.dom import ValidationErr
 from django.core.cache import cache
 from django.contrib.auth import get_user_model
 
-from backend.backend_admin.authentication.auth.services import send_verification_email_task
-from backend.backend_admin.authentication.core.jwt_utils import TokenManager
-from backend.backend_admin.authentication.verification.tasks import send_password_reset_email_task
-from backend.backend_admin.authentication.verification.tokens import TokenVerifier
+from authentication.auth.services import send_verification_email_task
+from authentication.core.jwt_utils import TokenManager
+from authentication.verification.tasks import send_password_reset_email_task
+from authentication.verification.tokens import TokenVerifier
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 

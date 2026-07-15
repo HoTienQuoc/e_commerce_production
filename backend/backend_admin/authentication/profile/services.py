@@ -7,7 +7,6 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from authentication.core.jwt_utils import TokenManager
 from authentication.serializers import UserSerializer
-from backend.backend_admin.authentication import serializers
 
 logger = logging.getLogger(__name__)
 

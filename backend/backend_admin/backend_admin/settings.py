@@ -1,4 +1,5 @@
 from email.policy import default
+import os
 from pathlib import Path
 from unittest.mock import DEFAULT
 from decouple import config
@@ -78,7 +79,7 @@ DATABASES = {
         "USER": config('DB_USER'),
         "PASSWORD": config('DB_PASSWORD'),
         "HOST": config('DB_HOST'),
-        "PORT": config('DB_HOST', cast=int),
+        "PORT": config('DB_PORT', cast=int),
     }
 }
 
@@ -118,6 +119,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 SIMPLE_JWT = {

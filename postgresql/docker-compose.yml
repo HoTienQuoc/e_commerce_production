@@ -4,9 +4,9 @@ services:
     container_name: postgres
     restart: always
     environment:
-      POSTGRES_USER: postgres
+      POSTGRES_USER: ecommerce
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: mydb
+      POSTGRES_DB: backend_admin
     ports:
       - "5432:5432"
     volumes:
