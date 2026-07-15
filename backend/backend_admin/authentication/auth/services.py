@@ -45,7 +45,7 @@ class AuthenticationService:
 
             if first_name:
                 user.first_name = first_name
-                user.save(update_fields = ['full_name'])
+                user.save(update_fields = ['first_name'])
             
             if last_name:
                 user.last_name = last_name
