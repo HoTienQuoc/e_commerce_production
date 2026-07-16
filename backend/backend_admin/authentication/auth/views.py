@@ -1,3 +1,4 @@
+from errno import EROFS
 import logging
 import traceback
 from django.utils import timezone
@@ -41,14 +42,15 @@ class UserRegistrationView(BaseAPIView):
             # create response object
             response = Response(standardized_response(**response_data), status = status_code)
 
-            if success and status_code in (200, 201) and settings.JWT_COOKIE_SECURE:
+            if success :
                 tokens = response_data.get('data', {}).get('tokens', {})
-                if 'refresh_token' in tokens and 'refresh_expires_in' in tokens:
+                refresh_token = tokens.get('refresh_token')
+                if refresh_token:
                     response.set_cookie(
                         key = settings.JWT_COOKIE_NAME,
-                        value=tokens['refresh_token'],
-                        expires= timezone.now() + timedelta(seconds=tokens['refresh_expires_in']),
-                        secure=True,
+                        value=refresh_token,
+                        expires= timezone.now() + settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'],
+                        secure=settings.JWT_COOKIE_SECURE,
                         httponly=True,
                         samesite='Strict',
                         path='/',
@@ -88,21 +90,22 @@ class UserLoginView(BaseAPIView):
 
             if success and status_code in (200, 201) and settings.JWT_COOKIE_SECURE:
                 tokens = response_data.get('data', {}).get('tokens', {})
-                if 'refresh_token' in tokens and 'refresh_expires_in' in tokens:
+                refresh_token = tokens.get('refresh_token')
+                if refresh_token:
                     response.set_cookie(
                         key = settings.JWT_COOKIE_NAME,
-                        value=tokens['refresh_token'],
-                        expires= timezone.now() + timedelta(seconds=tokens['refresh_expires_in']),
-                        secure=True,
+                        value=refresh_token,
+                        expires= timezone.now() + settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'],
+                        secure=settings.JWT_COOKIE_SECURE,
                         httponly=True,
-                        samesite='Strict',
+                        samesite=settings.JWT_COOKIE_SAMESITE,
                         path='/',
-                        domain=settings.SESSION_COOKIE_DOMAIN
                     )
+                    del response.data['data']['tokens']['refresh_token'] # pyright: ignore[reportOptionalSubscript]
 
                 # Set CSRF token
-                if success:
-                    get_token(request)
+                # if success:
+                #     get_token(request)
                 return response
         except Exception as e:
             logger.error(f"Login error: {str(e)}")
@@ -116,31 +119,33 @@ class TokenRefreshView(BaseAPIView):
 
     def post(self, request):
         try:
-            refresh_token = request.data.get('refresh_token')
-            if not refresh_token and settings.JWT_COOKIE_SECURE:
-                refresh_token = request.COOKIES.get(settings.JWT_COOKIE_NAME)
+            refresh_token = request.COOKIES.get(settings.JWT_COOKIE_NAME)
+            if not refresh_token:
+                return Response(
+                    standardized_response(success=False, error="Refresh token not found in cookie."), status=status.HTTP_401_UNAUTHORIZED
+                )
             
             success, response_data, status_code = AuthenticationService.refresh_token(refresh_token)
 
             response = Response(standardized_response(**response_data), status = status_code) # pyright: ignore[reportArgumentType]
 
-            if success and status_code in (200, 201) and settings.JWT_COOKIE_SECURE:
-                tokens = response_data.get('data', {}).get('tokens', {}) # pyright: ignore[reportAttributeAccessIssue]
-                if "refresh_token" in tokens and "refresh_expires_in" in tokens: # pyright: ignore[reportOperatorIssue]
+            if success:
+                tokens = response_data.get('data', {})
+                new_refresh_token = tokens.get('refresh_token') # pyright: ignore[reportAttributeAccessIssue]
+                if new_refresh_token:
                     response.set_cookie(
                         key = settings.JWT_COOKIE_NAME,
-                        value = tokens['refresh_token'], # pyright: ignore[reportArgumentType] # pyright: ignore[reportIndexIssue] # type: ignore
-                        expires= timezone.now() + timedelta(seconds=tokens['refresh_expires_in']), # pyright: ignore[reportArgumentType] # pyright: ignore[reportIndexIssue] # type: ignore
-                        secure=True,
+                        value = new_refresh_token, # pyright: ignore[reportArgumentType]
+                        expires= timezone.now() + settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'],
+                        secure=settings.JWT_COOKIE_SECURE,
                         httponly=True,
                         samesite='Strict',
-                        path='/',
-                        domain=settings.SESSION_COOKIE_DOMAIN
                     )
+                    del response.data['data']['refresh_token'] # pyright: ignore[reportOptionalSubscript]
 
                 # Set CSRF token
-                if success:
-                    get_token(request)
+                # if success:
+                #     get_token(request)
                 return response
         
         except Exception as e:

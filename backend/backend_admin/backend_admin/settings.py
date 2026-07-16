@@ -139,8 +139,10 @@ SIMPLE_JWT = {
 }
 
 # JWT Cookie Settings
-JWT_COOKIE_SECURE = False
+JWT_COOKIE_SECURE = config('JWT_COOKIE_SECURE', default=False, cast=bool)
 JWT_COOKIE_NAME = 'refresh_token'
+JWT_COOKIE_SAMESITE = 'Lax' # Use 'Strict' if possible
+
 
 
 # Cache settings
@@ -172,7 +174,7 @@ CELERY_TIMEZONE = "Africa/Nairobi"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30*60 # 30 minutes
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-CELERY_BROKEN_URL = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -195,3 +197,39 @@ EMAIL_PORT=587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='your-gmail@gmail.com')
 EMAIL_HOST_PASSWORD=config('EMAIL_HOST_PASSWORD', default='')
+
+
+# cors configurations
+CORS_ALLOW_CREDENTIALS = True
+
+# Developement vs Production CORS settings
+if DEBUG:
+    #Allow all origins in development for Flutter web testing
+    CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOW_HEADERS = [
+        'accept',
+        'accept-encoding',
+        'authorization',
+        'content-type',
+        'dnt',
+        'origin',
+        'user-agent',
+        'x-csrftoken',
+        'x-requested-with',
+    ]
+else:
+    # Production settings - specific origins only 
+    CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOWED_ORIGINS = config(
+        'CORS_ALLOWED_ORIGINS',
+        default="https://yourdomain.com",
+        cast = lambda v: [s.strip() for s in v.split(',')]
+    )
+
+# Allow specific methods
+CORS_ALLOWED_METHODS = [
+    'DELETE', 'GET', 'OPTIONS', 'PATCH', 'POST', 'PUT'
+]
+
+# CORS preflight cache
+CORS_PREFLIGHT_MAX_AGE

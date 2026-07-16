@@ -105,18 +105,18 @@ class ProfileService:
             # Try to parse as JSON array first 
             try:
                 image_list = json.loads(image_data)
-                if isinstance(image_data, list) and len(image_list) > 0:
+                if isinstance(image_list, list) and len(image_list) > 0:
                     image_info = image_list[0]
                     data_url = image_info.get('data')
                 
                 else:
-                    data_url = f"data:image/jpeg;base64, {image_data}"
+                    data_url = f"data:image/jpeg;base64,{image_data}"
             except json.JSONDecodeError:
-                dat_url = f"data:image/jpeg;base64, {image_data}"
+                dat_url = f"data:image/jpeg;base64,{image_data}"
             
             # Proccess the data_url
             if ';base64' in data_url:
-                format_part, imgstr = data_url.split(';base64')
+                format_part, imgstr = data_url.split(';base64,')
 
                 # Extract file extension, default to jpeg
                 try:

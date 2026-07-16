@@ -38,8 +38,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta: 
         model=  CustomUser
-        fields = ['id', 'email', 'username', 'first_name', 'last_name', 'profile_picture_url', 'phone_number', 'is_verified', 'create_at']
-        read_only_fields = ['id', 'email', 'create_at', 'is_verified', 'profile_picture_url']
+        fields = ['id', 'email', 'username', 'first_name', 'last_name', 'profile_picture', 'profile_picture_url', 'phone_number', 'is_verified', 'created_at']
+        read_only_fields = ['id', 'email', 'created_at', 'is_verified', 'profile_picture_url']
     
     def get_profile_picture_url(self, obj):
         if obj.profile_picture: 
