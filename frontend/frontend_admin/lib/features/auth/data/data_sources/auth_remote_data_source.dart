@@ -11,7 +11,8 @@ abstract class AuthRemoteDataSource {
     String email,
     String password,
     String? phoneNumber,
-    String? fullName,
+    String? firstName,
+    String? lastName,
   );
 
   Future<Map<String, dynamic>> login(String email, String password);
@@ -38,8 +39,23 @@ class AutoRemoteDataSourceImpl implements AuthRemoteDataSource {
   AutoRemoteDataSourceImpl({required this.apiClient});
 
   @override
-  Future<UserModel> getUserProfile() {
-    throw UnimplementedError();
+  Future<UserModel> getUserProfile() async {
+    try {
+      final responseData = await apiClient.get(ApiEndpoints.profile);
+
+      if (responseData['success'] != true) {
+        throw ServerException(
+          message: responseData['error'] ?? "Failed to get user profile",
+        );
+      }
+
+      return UserModel.fromJson(responseData['data']);
+    } on DioException catch (e) {
+      final errorMessage = _handleDioError(e);
+      throw ServerException(message: errorMessage);
+    } catch (e) {
+      throw ServerException(message: e.toString());
+    }
   }
 
   @override
@@ -72,8 +88,29 @@ class AutoRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<AuthTokensModel> refreshTokens() {
-    throw UnimplementedError();
+  Future<AuthTokensModel> refreshTokens() async {
+    try {
+      final responseData = await apiClient.post(ApiEndpoints.refreshToken);
+
+      if (responseData['success'] != true) {
+        throw ServerException(
+          message: responseData['error'] ?? "Token refresh failed",
+        );
+      }
+
+      final accessToken = responseData['data']['access_token'];
+      return AuthTokensModel.fromJson({
+        'access_token': accessToken,
+        'refresh_token': '',
+        'expires_in': 900,
+        'refresg_expires_in': 0,
+      });
+    } on DioException catch (e) {
+      final errorMessage = _handleDioError(e);
+      throw ServerException(message: errorMessage);
+    } catch (e) {
+      throw ServerException(message: e.toString());
+    }
   }
 
   @override
@@ -81,9 +118,42 @@ class AutoRemoteDataSourceImpl implements AuthRemoteDataSource {
     String email,
     String password,
     String? phoneNumber,
-    String? fullName,
-  ) {
-    throw UnimplementedError();
+    String? firstName,
+    String? lastName,
+  ) async {
+    try {
+      final Map<String, dynamic> registrationData = {
+        'email': email,
+        'password': password,
+      };
+
+      if (phoneNumber != null && phoneNumber.isNotEmpty) {
+        registrationData['phone_number'] = phoneNumber;
+      }
+
+      if (firstName != null && firstName.isNotEmpty) {
+        registrationData['first_name'] = firstName;
+      }
+
+      if (lastName != null && lastName.isNotEmpty) {
+        registrationData['last_name'] = lastName;
+      }
+
+      final responseData = await apiClient.post(
+        ApiEndpoints.register,
+        data: registrationData,
+      );
+
+      final data = responseData['data'];
+      return data;
+    } on DioException catch (e) {
+      final errorMessage = _handleDioError(e);
+      throw ServerException(message: errorMessage);
+    } on ServerException {
+      rethrow;
+    } catch (e) {
+      throw ServerException(message: e.toString());
+    }
   }
 
   @override
@@ -97,8 +167,20 @@ class AutoRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<bool> validateToken() {
-    throw UnimplementedError();
+  Future<bool> validateToken() async {
+    try {
+      final responseData = await apiClient.get(ApiEndpoints.validateToken);
+      if (responseData['success'] != true) {
+        return false;
+      }
+      return responseData['data']['valid'] ?? false;
+    } on DioException catch (e) {
+      debugPrint('Token validation DioException: ${e.message}');
+      return false;
+    } catch (e) {
+      debugPrint('Token validation error: $e');
+      return false;
+    }
   }
 
   String _handleDioError(DioException e) {

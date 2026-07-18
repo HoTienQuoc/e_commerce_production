@@ -5,7 +5,7 @@ import 'package:frontend_admin/core/errors/exceptions.dart';
 class ApiClient {
   final Dio _dio;
 
-  ApiClient({required Dio dio}) : _dio = dio {
+  ApiClient({required this._dio}) {
     // set base options
     _dio.options = BaseOptions(
       baseUrl: ApiEndpoints.baseUrl,
