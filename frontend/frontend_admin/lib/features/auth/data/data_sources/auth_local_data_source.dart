@@ -10,7 +10,7 @@ const CACHED_TOKENS_KEY = 'CACHED_TOKENS';
 const CACHED_USER_KEY = 'CACHED_USER';
 
 abstract class AuthLocalDataSource {
-  Future<void> cacheToken(AuthTokensModel tokens);
+  Future<void> cacheTokens(AuthTokensModel tokens);
   Future<AuthTokensModel> getTokens();
   Future<void> cacheUser(UserModel user);
   Future<UserModel?> getUser();
@@ -24,7 +24,7 @@ class AuthLocalDataSourceImple implements AuthLocalDataSource {
   AuthLocalDataSourceImple({required this.sharedPreferences});
 
   @override
-  Future<void> cacheToken(AuthTokensModel tokens) async {
+  Future<void> cacheTokens(AuthTokensModel tokens) async {
     final jsonString = json.encode(tokens.toJson());
     await sharedPreferences.setString(CACHED_TOKENS_KEY, jsonString);
   }
