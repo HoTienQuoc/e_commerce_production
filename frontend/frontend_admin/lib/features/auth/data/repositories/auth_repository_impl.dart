@@ -1,0 +1,119 @@
+import 'package:dartz/dartz.dart';
+import 'package:frontend_admin/app/auth/token_manager.dart';
+import 'package:frontend_admin/core/errors/exceptions.dart';
+import 'package:frontend_admin/core/errors/failure.dart';
+import 'package:frontend_admin/core/network/network_info.dart';
+import 'package:frontend_admin/features/auth/data/data_sources/auth_local_data_source.dart';
+import 'package:frontend_admin/features/auth/data/data_sources/auth_remote_data_source.dart';
+import 'package:frontend_admin/features/auth/data/models/auth_tokens_model.dart';
+import 'package:frontend_admin/features/auth/data/models/user_model.dart';
+import 'package:frontend_admin/features/auth/domain/entities/auth_credentials_entity.dart';
+import 'package:frontend_admin/features/auth/domain/entities/auth_tokens_entity.dart';
+import 'package:frontend_admin/features/auth/domain/entities/user_entity.dart';
+import 'package:frontend_admin/features/auth/domain/repositories/auth_repository.dart';
+
+class AuthRepositoryImpl implements AuthRepository {
+  final AuthRemoteDataSource remoteDataSource;
+  final AuthLocalDataSource localDataSource;
+  final TokenManager tokenManager;
+  final NetworkInfo networkInfo;
+
+  AuthRepositoryImpl({
+    required this.remoteDataSource,
+    required this.localDataSource,
+    required this.tokenManager,
+    required this.networkInfo,
+  });
+
+  @override
+  Future<Either<Failure, UserEntity?>> getCurrentUser() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> loginWithEmailAndPassword(
+    AuthCredentialsEntity credentials,
+  ) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Either<Failure, void>> logout() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Either<Failure, AuthTokensEntity>> refreshTokens() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> registerWithEmailAndPassword(
+    AuthCredentialsEntity credentials,
+  ) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final result = await remoteDataSource.register(
+          credentials.email,
+          credentials.password,
+          credentials.phoneNumber,
+          credentials.firstName,
+          credentials.lastName,
+        );
+
+        // Extract user and tokens from result
+        final user = UserModel.fromJson(result['user']);
+        final tokens = AuthTokensModel.fromJson(result['tokens']);
+
+        final bool isVerified = result['email_verified'] ?? false;
+
+        // Update user verification status from backend
+        if (user.isVerified != isVerified) {
+          final updatedUser = UserModel(
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            phoneNumber: user.phoneNumber,
+            profilePictureUrl: user.profilePictureUrl,
+            isVerified: user.isVerified,
+          );
+
+          await localDataSource.cacheUser(updatedUser);
+          await localDataSource.cacheTokens(tokens);
+
+          return Right(updatedUser);
+        }
+
+        // cache user and tokens
+        await localDataSource.cacheUser(user);
+        await localDataSource.cacheTokens(tokens);
+        return Right(user);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(message: e.message));
+      } on AuthenticationException catch (e) {
+        return Left(AuthenticationFailure(message: e.message));
+      } catch (e) {
+        return Left(ServerFailure(message: e.toString()));
+      }
+    } else {
+      return Left(NetworkFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> updateUserProfile({
+    String? firstName,
+    String? lastName,
+    String? phoneNumber,
+    profileImage,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Either<Failure, bool>> validateToken() {
+    throw UnimplementedError();
+  }
+}
