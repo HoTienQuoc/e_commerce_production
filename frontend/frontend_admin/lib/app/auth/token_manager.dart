@@ -52,7 +52,7 @@ class TokenManager {
     try {
       final response = await _authDio.post(
         ApiEndpoints.refreshToken,
-        options: Options(extra: {'withcredentials': true}),
+        options: Options(extra: {'withCredentials': true}),
       );
       if (response.statusCode == 200 && response.data['success'] == true) {
         final newAccessToken = response.data['data']['access_token'];
@@ -89,4 +89,59 @@ class TokenManager {
   Future<bool> hasTokens() async {
     return await _localDataSource.hasTokens();
   }
+
+  // Check if access token is expired based on stored expiry;
+  Future<bool> isAccessTokenExpiried() async {
+    try {
+      if (!await hasTokens()) {
+        return true;
+      }
+
+      final tokens = await _localDataSource.getTokens();
+      return tokens.accessExpiry.isBefore(DateTime.now());
+    } catch (e) {
+      return true;
+    }
+  }
+
+  // Check if refresh token is expired based on stored expiry;
+  Future<bool> isRefreshTokenExpiried() async {
+    try {
+      if (!await hasTokens()) {
+        return true;
+      }
+
+      final tokens = await _localDataSource.getTokens();
+      return tokens.refreshExpiry.isBefore(DateTime.now());
+    } catch (e) {
+      return true;
+    }
+  }
+
+  // Get authentication status
+  Future<AuthStatus> getAuthStatus() async {
+    try {
+      if (!await hasTokens()) {
+        return AuthStatus.unauthenticated;
+      }
+
+      if (!await isAccessTokenExpiried()) {
+        return AuthStatus.authenticated;
+      }
+
+      if (!await isRefreshTokenExpiried()) {
+        return AuthStatus.expired;
+      }
+
+      return AuthStatus.unauthenticated;
+    } catch (e) {
+      return AuthStatus.unauthenticated;
+    }
+  }
+}
+
+enum AuthStatus {
+  authenticated, // Valid access token
+  expired, // Access token expired but refresh token valid
+  unauthenticated, // No tokens or both expired
 }
