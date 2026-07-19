@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:frontend_admin/app/auth/token_manager.dart';
 import 'package:frontend_admin/core/constants/api_endpoints.dart';
 import 'package:frontend_admin/core/errors/exceptions.dart';
 import 'package:frontend_admin/core/network/api_client.dart';
@@ -36,8 +37,12 @@ abstract class AuthRemoteDataSource {
 
 class AutoRemoteDataSourceImpl implements AuthRemoteDataSource {
   final ApiClient apiClient;
+  final TokenManager tokenManager;
 
-  AutoRemoteDataSourceImpl({required this.apiClient});
+  AutoRemoteDataSourceImpl({
+    required this.apiClient,
+    required this.tokenManager,
+  });
 
   @override
   Future<UserModel> getUserProfile() async {
@@ -72,6 +77,8 @@ class AutoRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
 
       final data = responseData['data'];
+      final tokens = AuthTokensModel.fromJson(data['tokens']);
+      await tokenManager.storeTokens(tokens);
       return data;
     } on DioException catch (e) {
       final errorMessage = _handleDioError(e);
@@ -91,8 +98,12 @@ class AutoRemoteDataSourceImpl implements AuthRemoteDataSource {
       } catch (e) {
         debugPrint('Backend logout failed, proceeding with local cleanup: $e');
       }
+
+      // Always clear local tokens regardless of backend call success
+      await tokenManager.clearTokens();
     } catch (e) {
       debugPrint('Error during logout: $e');
+      await tokenManager.clearTokens();
     }
   }
 
@@ -154,6 +165,8 @@ class AutoRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
 
       final data = responseData['data'];
+      final tokens = AuthTokensModel.fromJson(data['tokens']);
+      await tokenManager.storeTokens(tokens);
       return data;
     } on DioException catch (e) {
       final errorMessage = _handleDioError(e);
