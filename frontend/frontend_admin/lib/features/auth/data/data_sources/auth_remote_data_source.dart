@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:frontend_admin/core/constants/api_endpoints.dart';
@@ -83,8 +84,16 @@ class AutoRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> logout() {
-    throw UnimplementedError();
+  Future<void> logout() async {
+    try {
+      try {
+        await apiClient.post(ApiEndpoints.logout);
+      } catch (e) {
+        debugPrint('Backend logout failed, proceeding with local cleanup: $e');
+      }
+    } catch (e) {
+      debugPrint('Error during logout: $e');
+    }
   }
 
   @override
@@ -162,8 +171,53 @@ class AutoRemoteDataSourceImpl implements AuthRemoteDataSource {
     String? lastName,
     String? phoneNumber,
     Uint8List? profileImageBytes,
-  ) {
-    throw UnimplementedError();
+  ) async {
+    try {
+      final updateData = <String, dynamic>{};
+
+      if (firstName != null) {
+        updateData['first_name'] = firstName;
+      }
+
+      if (lastName != null) {
+        updateData['last_name'] = lastName;
+      }
+
+      if (phoneNumber != null) {
+        updateData['phone_number'] = phoneNumber;
+      }
+
+      // Handle profile image as base64 data if provided
+      if (profileImageBytes != null) {
+        final base64Image = base64Encode(profileImageBytes);
+        // Send as JSON array that django expects
+        updateData['image_data'] = jsonEncode([
+          {
+            'data': 'data:image/jpeg;base64,$base64Image',
+            'name': 'profile_image.jpg',
+            'type': 'image/jpeg',
+          },
+        ]);
+      }
+
+      final responseData = await apiClient.put(
+        ApiEndpoints.profile,
+        data: updateData,
+      );
+
+      if (responseData['success'] != true) {
+        throw ServerException(
+          message: responseData['error'] ?? "profile update failed",
+        );
+      }
+
+      return UserModel.fromJson(responseData['data']);
+    } on DioException catch (e) {
+      final errorMessage = _handleDioError(e);
+      throw ServerException(message: errorMessage);
+    } catch (e) {
+      throw ServerException(message: e.toString());
+    }
   }
 
   @override
