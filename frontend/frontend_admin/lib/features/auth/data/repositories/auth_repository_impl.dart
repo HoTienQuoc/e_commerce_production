@@ -33,8 +33,32 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, UserEntity>> loginWithEmailAndPassword(
     AuthCredentialsEntity credentials,
-  ) {
-    throw UnimplementedError();
+  ) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final result = await remoteDataSource.login(
+          credentials.email,
+          credentials.password,
+        );
+
+        // Extract user and tokens from result
+        final user = UserModel.fromJson(result['user']);
+        final tokens = AuthTokensModel.fromJson(result['tokens']);
+
+        // cache user and tokens
+        await localDataSource.cacheUser(user);
+        await localDataSource.cacheTokens(tokens);
+        return Right(user);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(message: e.message));
+      } on AuthenticationException catch (e) {
+        return Left(AuthenticationFailure(message: e.message));
+      } catch (e) {
+        return Left(ServerFailure(message: e.toString()));
+      }
+    } else {
+      return Left(NetworkFailure());
+    }
   }
 
   @override
@@ -43,8 +67,24 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, AuthTokensEntity>> refreshTokens() {
-    throw UnimplementedError();
+  Future<Either<Failure, AuthTokensEntity>> refreshTokens() async {
+    if (await networkInfo.isConnected) {
+      try {
+        final newTokens = await remoteDataSource.refreshTokens();
+        // Cache new tokens
+        await localDataSource.cacheTokens(newTokens);
+        return Right(newTokens);
+      } on ServerException catch (e) {
+        await localDataSource.clearAuthData();
+        return Left(AuthenticationFailure(message: e.message));
+      } on CacheException {
+        return Left(CacheFailure());
+      } catch (e) {
+        return Left(ServerFailure(message: e.toString()));
+      }
+    } else {
+      return Left(NetworkFailure());
+    }
   }
 
   @override
@@ -113,7 +153,49 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> validateToken() {
-    throw UnimplementedError();
+  Future<Either<Failure, bool>> validateToken() async {
+    if (await networkInfo.isConnected) {
+      try {
+        if (!await tokenManager.hasTokens()) {
+          return const Right(false);
+        }
+
+        // Check if tokens are expired locally first
+        final authStatus = await tokenManager.getAuthStatus();
+
+        switch (authStatus) {
+          case AuthStatus.authenticated:
+            break;
+          case AuthStatus.expired:
+            final refreshed = await tokenManager.refreshTokens();
+            if (!refreshed) {
+              return const Right(false);
+            }
+            break;
+          case AuthStatus.unauthenticated:
+            return const Right(false);
+        }
+
+        final isValid = await remoteDataSource.validateToken();
+        return Right(isValid);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(message: e.message));
+      } catch (e) {
+        return Left(ServerFailure(message: e.toString()));
+      }
+    } else {
+      try {
+        if (!await tokenManager.hasTokens()) {
+          return const Right(false);
+        }
+
+        final authStatus = await tokenManager.getAuthStatus();
+        return Right(authStatus == AuthStatus.authenticated);
+      } on CacheException {
+        return Left(CacheFailure());
+      } catch (e) {
+        return Left(CacheFailure());
+      }
+    }
   }
 }
