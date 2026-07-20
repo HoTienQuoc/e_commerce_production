@@ -26,8 +26,43 @@ class AuthRepositoryImpl implements AuthRepository {
   });
 
   @override
-  Future<Either<Failure, UserEntity?>> getCurrentUser() {
-    throw UnimplementedError();
+  Future<Either<Failure, UserEntity?>> getCurrentUser() async {
+    try {
+      final cachedUser = await localDataSource.getUser();
+      if (cachedUser != null) {
+        // Validate token to ensure user is still authenticated
+        if (await networkInfo.isConnected) {
+          try {
+            final isValid = await remoteDataSource.validateToken();
+            if (isValid) {
+              return Right(cachedUser);
+            } else {
+              return await _refreshAndGetUser();
+            }
+          } catch (e) {
+            return Right(cachedUser);
+          }
+        } else {
+          return Right(cachedUser);
+        }
+      } else {
+        if (await networkInfo.isConnected) {
+          try {
+            final user = await remoteDataSource.getUserProfile();
+            await localDataSource.cacheUser(user);
+            return Right(user);
+          } catch (e) {
+            return const Right(null);
+          }
+        } else {
+          return const Right(null);
+        }
+      }
+    } on CacheException {
+      return const Right(null);
+    } catch (e) {
+      return const Right(null);
+    }
   }
 
   @override
@@ -62,8 +97,23 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, void>> logout() {
-    throw UnimplementedError();
+  Future<Either<Failure, void>> logout() async {
+    try {
+      if (await networkInfo.isConnected) {
+        try {
+          await remoteDataSource.logout();
+        } catch (e) {
+          // Continue with local logout even if remote fails
+        }
+      }
+      // always clear local auth data
+      await localDataSource.clearAuthData();
+      return const Right(null);
+    } on CacheException {
+      return Left(CacheFailure());
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
   }
 
   @override
@@ -148,8 +198,28 @@ class AuthRepositoryImpl implements AuthRepository {
     String? lastName,
     String? phoneNumber,
     profileImage,
-  }) {
-    throw UnimplementedError();
+  }) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final user = await remoteDataSource.updateUserProfile(
+          firstName,
+          lastName,
+          phoneNumber,
+          profileImage,
+        );
+
+        await localDataSource.cacheUser(user);
+        return Right(user);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(message: e.message));
+      } on AuthenticationFailure catch (e) {
+        return Left(AuthenticationFailure(message: e.message));
+      } catch (e) {
+        return Left(ServerFailure(message: e.toString()));
+      }
+    } else {
+      return Left(NetworkFailure());
+    }
   }
 
   @override
@@ -197,5 +267,19 @@ class AuthRepositoryImpl implements AuthRepository {
         return Left(CacheFailure());
       }
     }
+  }
+
+  // Helper method to refresh tokens and get user
+  Future<Either<Failure, UserEntity?>> _refreshAndGetUser() async {
+    final refreshResult = await refreshTokens();
+    return refreshResult.fold((failure) => Left(failure), (tokens) async {
+      try {
+        final user = await remoteDataSource.getUserProfile();
+        await localDataSource.cacheUser(user);
+        return Right(user);
+      } catch (e) {
+        return const Right(null);
+      }
+    });
   }
 }
