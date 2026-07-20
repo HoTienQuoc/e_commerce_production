@@ -1,8 +1,5 @@
 part of 'auth_bloc.dart';
 
-// import 'package:equatable/equatable.dart';
-// import 'package:frontend_admin/features/auth/domain/usecases/update_profile_usecase.dart';
-
 abstract class AuthEvent extends Equatable {
   @override
   List<Object?> get props => [];

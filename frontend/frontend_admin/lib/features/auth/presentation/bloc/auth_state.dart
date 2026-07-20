@@ -1,18 +1,13 @@
 part of 'auth_bloc.dart';
 
-import 'package:equatable/equatable.dart';
-import 'package:frontend_admin/features/auth/domain/entities/user_entity.dart';
-
-abstract class AuthState extends Equatable{
+abstract class AuthState extends Equatable {
   @override
   List<Object?> get props => [];
 }
 
 class AuthInitial extends AuthState {}
 
-class AuthLoading extends AuthState {
-
-}
+class AuthLoading extends AuthState {}
 
 class Authenticated extends AuthState {
   final UserEntity user;
@@ -23,9 +18,7 @@ class Authenticated extends AuthState {
   List<Object?> get props => [user];
 }
 
-class UnAuthenticated extends AuthState {
-
-}
+class UnAuthenticated extends AuthState {}
 
 class AuthError extends AuthState {
   final String message;
