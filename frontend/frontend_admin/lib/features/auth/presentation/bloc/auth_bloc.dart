@@ -21,7 +21,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.logoutUsecase,
     required this.updateProfileUsecase,
     required this.validateTokenUsecase,
-  }) : super(AuthInitial());
+  }) : super(AuthInitial()) {
+    on<CheckAuthStatusEvent>(_onCheckAuthStatus);
+    on<LoginEvent>(_onLogin);
+    on<LogoutEvent>(_onLogout);
+    on<UpdateProfileEvent>(_onUpdateProfile);
+  }
 
   Future<void> _onCheckAuthStatus(
     CheckAuthStatusEvent event,
@@ -65,5 +70,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       (failure) => emit(AuthError(message: failure.message)),
       (user) => emit(Authenticated(user: user)),
     );
+  }
+
+  Future<void> _onLogout(LogoutEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    final result = await logoutUsecase(NoParams());
+
+    result.fold(
+      (failure) =>
+          emit(AuthError(message: 'Logout failed: ${failure.message}')),
+      (_) => emit(UnAuthenticated()),
+    );
+  }
+
+  Future<void> _onUpdateProfile(
+    UpdateProfileEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(ProfileUpdating());
+    final result = await updateProfileUsecase(event.params);
+    result.fold((failure) => emit(ProfileUpdateError(error: failure.message)), (
+      updatedUser,
+    ) {
+      emit(ProfileUpdateSuccess(updatedUser: updatedUser));
+      emit(Authenticated(user: updatedUser));
+    });
   }
 }
