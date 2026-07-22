@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:frontend_admin/core/theme/theme.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,14 +12,58 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage>
     with SingleTickerProviderStateMixin {
+  late AnimationController _backgroundController;
+  final _particleSystem = ParticleSystem();
+
+  @override
+  void initState() {
+    super.initState();
+    _backgroundController = AnimationController(
+      duration: const Duration(seconds: 20),
+      vsync: this,
+    )..repeat();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Scaffold(
+      body: Stack(
+        children: [
+          // animated background
+          AnimatedBuilder(
+            animation: _backgroundController,
+            builder: (context, child) {
+              return CustomPaint(
+                painter: _particleSystem.createPainter(
+                  _backgroundController.value,
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppTheme.primaryDark.withAlpha((0.9 * 255).round()),
+                        AppTheme.primaryMedium.withAlpha((0.7 * 255).round()),
+                        AppTheme.primaryLight.withAlpha((0.5 * 255).round()),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 }
 
 class ParticleSystem {
   final List<Particle> _particles = List.generate(100, (index) => Particle());
+  CustomPainter createPainter(double progress) {
+    return _ParticlePainter(_particles, progress);
+  }
 }
 
 class Particle {
@@ -52,5 +97,34 @@ class Particle {
     // wrap around
     x = x % 1;
     y = y % 1;
+  }
+}
+
+class _ParticlePainter extends CustomPainter {
+  final List<Particle> particles;
+  final double progress;
+  _ParticlePainter(this.particles, this.progress) {
+    for (var particle in particles) {
+      particle.update(progress);
+    }
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (var particle in particles) {
+      final paint = Paint()
+        ..color = particle.color
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(
+        Offset(particle.x * size.width, particle.y * size.height),
+        particle.radius,
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    throw UnimplementedError();
   }
 }
