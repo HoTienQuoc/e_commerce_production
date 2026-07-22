@@ -25,6 +25,12 @@ class _LoginPageState extends State<LoginPage>
   }
 
   @override
+  void dispose() {
+    _backgroundController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
@@ -53,9 +59,53 @@ class _LoginPageState extends State<LoginPage>
               );
             },
           ),
+
+          ..._buildDecorativeElements(),
         ],
       ),
     );
+  }
+
+  List<Widget> _buildDecorativeElements() {
+    return [
+      // Top left Decorative circle
+      Positioned(
+        top: -100,
+        left: -100,
+        child: Container(
+          width: 300,
+          height: 300,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.accentBlue.withAlpha((0.3 * 255).round()),
+                AppTheme.accentPurple.withAlpha((0.3 * 255).round()),
+              ],
+            ),
+          ),
+        ),
+      ),
+
+      // Bottom right Decorative circle
+      Positioned(
+        bottom: -150,
+        right: -150,
+        child: Container(
+          width: 400,
+          height: 400,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.accentGreen.withAlpha((0.3 * 255).round()),
+                AppTheme.accentOrange.withAlpha((0.3 * 255).round()),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ];
   }
 }
 
@@ -94,7 +144,7 @@ class Particle {
     x += (sin(progress * 2 * pi + x * 10) * 0.001 * speed);
     y += (sin(progress * 2 * pi + x * 10) * 0.001 * speed);
 
-    // wrap around
+    // Wrap around
     x = x % 1;
     y = y % 1;
   }
@@ -124,7 +174,5 @@ class _ParticlePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    throw UnimplementedError();
-  }
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
