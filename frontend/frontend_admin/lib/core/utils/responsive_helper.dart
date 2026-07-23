@@ -48,4 +48,81 @@ class ResponsiveHelper {
   static double getWidthPercentage(BuildContext context, double percentage) {
     return MediaQuery.of(context).size.width * (percentage / 100);
   }
+
+  // Font size calculation with device pixel awareness
+  static double adaptiveFontSize(
+    BuildContext context,
+    double size, {
+    double minsize = 12,
+    double maxSize = 30,
+  }) {
+    final deviceWidth = MediaQuery.of(context).size.width;
+    double scaleFactor;
+    if (deviceWidth < mobileBreakpoint) {
+      scaleFactor = 0.85 + (deviceWidth / mobileBreakpoint) * 0.15;
+    } else if (deviceWidth < desktopBreakpoint) {
+      scaleFactor = (deviceWidth / desktopBreakpoint) * 0.3 + 0.7;
+    } else {
+      scaleFactor = 1.0;
+    }
+    final adaptiveSize = size * scaleFactor;
+    return adaptiveSize.clamp(minsize, maxSize);
+  }
+
+  static double getResponsiveWidth(
+    BuildContext context, {
+    required double forMobile,
+    required double forTablet,
+    required forDesktop,
+    double? forLargeDesktop,
+  }) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final orientation = MediaQuery.of(context).orientation;
+
+    // Adjust values for landscape orientation on mobile/tablet
+    final orientationFactor =
+        (orientation == Orientation.landscape &&
+            screenWidth < desktopBreakpoint)
+        ? 0.8
+        : 1.0;
+
+    if (screenWidth >= largeDesktopBreakpoint && forLargeDesktop != null) {
+      return forLargeDesktop * orientationFactor;
+    } else if (screenWidth >= desktopBreakpoint) {
+      return forDesktop * orientationFactor;
+    } else if (screenWidth >= mobileBreakpoint) {
+      return forTablet * orientationFactor;
+    } else {
+      return forMobile * orientationFactor;
+    }
+  }
+
+  static double getResponsiveFontSize(
+    BuildContext context, {
+    required double forMobile,
+    required double forTablet,
+    required forDesktop,
+    double? forLargeDesktop,
+  }) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
+    final isLandScape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    final densityFactor = devicePixelRatio > 2.5 ? 0.9 : 1.0;
+    final orientationFactor = (isLandScape && screenWidth < desktopBreakpoint)
+        ? 0.2
+        : 1.0;
+
+    // Adjust values for landscape orientation on mobile/tablet
+
+    if (screenWidth >= largeDesktopBreakpoint && forLargeDesktop != null) {
+      return forLargeDesktop * densityFactor * orientationFactor;
+    } else if (screenWidth >= desktopBreakpoint) {
+      return forDesktop * densityFactor * orientationFactor;
+    } else if (screenWidth >= mobileBreakpoint) {
+      return forTablet * densityFactor * orientationFactor;
+    } else {
+      return forMobile * densityFactor * orientationFactor;
+    }
+  }
 }
