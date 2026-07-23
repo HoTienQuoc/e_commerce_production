@@ -61,6 +61,12 @@ class _LoginPageState extends State<LoginPage>
           ),
 
           ..._buildDecorativeElements(),
+
+          Center(
+            child: SingleChildScrollView(
+              child: Padding(padding: EdgeInsets.symmetric()),
+            ),
+          ),
         ],
       ),
     );
