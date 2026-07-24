@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 class ResponsiveHelper {
@@ -73,7 +75,7 @@ class ResponsiveHelper {
     BuildContext context, {
     required double forMobile,
     required double forTablet,
-    required forDesktop,
+    required double forDesktop,
     double? forLargeDesktop,
   }) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -101,7 +103,7 @@ class ResponsiveHelper {
     BuildContext context, {
     required double forMobile,
     required double forTablet,
-    required forDesktop,
+    required double forDesktop,
     double? forLargeDesktop,
   }) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -125,4 +127,111 @@ class ResponsiveHelper {
       return forMobile * densityFactor * orientationFactor;
     }
   }
+
+  // Grid count with orientation awareness
+  static int getResponsiveGridCount(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    if (width >= largeDesktopBreakpoint) {
+      return isLandscape ? 5 : 4;
+    } else if (width >= desktopBreakpoint) {
+      return isLandscape ? 4 : 3;
+    } else if (width >= mobileBreakpoint) {
+      return isLandscape ? 3 : 2;
+    } else {
+      return isLandscape ? 2 : 1;
+    }
+  }
+
+  static EdgeInsets getResponsivePadding(BuildContext context) {
+    final safeArea = MediaQuery.of(context).padding;
+    final width = MediaQuery.of(context).size.width;
+
+    if (width >= desktopBreakpoint) {
+      return EdgeInsets.fromLTRB(
+        24.0 + safeArea.left,
+        24.0 + safeArea.top,
+        24.0 + safeArea.right,
+        24.0 + safeArea.bottom,
+      );
+    } else if (width >= mobileBreakpoint) {
+      return EdgeInsets.fromLTRB(
+        16.0 + safeArea.left,
+        16.0 + safeArea.top,
+        16.0 + safeArea.right,
+        16.0 + safeArea.bottom,
+      );
+    } else {
+      return EdgeInsets.fromLTRB(
+        12.0 + safeArea.left,
+        12.0 + safeArea.top,
+        12.0 + safeArea.right,
+        12.0 + safeArea.bottom,
+      );
+    }
+  }
+
+  // Aspect ratio with orientation awareness
+  static double getResponsiveAspectRatio(
+    BuildContext context, {
+    required double forMobile,
+    required double forTablet,
+    required double forDesktop,
+    double? forLargeDesktop,
+  }) {
+    final width = MediaQuery.of(context).size.width;
+    final isLandScape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    final orientationFactor = isLandScape ? 1.2 : 1.0;
+
+    if (width >= largeDesktopBreakpoint && forLargeDesktop != null) {
+      return forLargeDesktop * orientationFactor;
+    } else if (width >= desktopBreakpoint) {
+      return forDesktop * orientationFactor;
+    } else if (width >= mobileBreakpoint) {
+      return forTablet * orientationFactor;
+    } else {
+      return forMobile * orientationFactor;
+    }
+  }
+
+  // Responsive layout builder with smooth transitions
+  static Widget buildResponsiveLayout(
+    BuildContext context, {
+    required Widget mobile,
+    required Widget tablet,
+    required Widget desktop,
+    Widget? largeDesktop,
+  }) {
+    final width = MediaQuery.of(context).size.width;
+    if (width >= largeDesktopBreakpoint && largeDesktop != null) {
+      return largeDesktop;
+    } else if (width >= desktopBreakpoint) {
+      return desktop;
+    } else if (width >= mobileBreakpoint) {
+      return tablet;
+    } else {
+      return mobile;
+    }
+  }
+
+  // Get safe horizontal padding for content
+  static EdgeInsets getSafeHorizontalPadding(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+
+    if (width >= largeDesktopBreakpoint) {
+      final horizontalPadding = max(24.0, (width - 1400) / 2);
+      return EdgeInsets.symmetric(horizontal: horizontalPadding);
+    } else if (width > desktopBreakpoint) {
+      return const EdgeInsets.symmetric(horizontal: 32.0);
+    } else if (width >= mobileBreakpoint) {
+      return const EdgeInsets.symmetric(horizontal: 24.0);
+    } else {
+      return const EdgeInsets.symmetric(horizontal: 16.0);
+    }
+  }
+
+  // Helper function for max
+  static double max(double a, double b) => a > b ? a : b;
 }
