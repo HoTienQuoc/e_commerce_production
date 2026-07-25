@@ -31,7 +31,7 @@ class _LoginFormState extends State<LoginForm> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            "Frontend Clothes Admin Login",
+            "Stylish clothes Admin Login",
             style: AppTheme.headingLarge().copyWith(
               color: AppTheme.textPrimary,
             ),
@@ -66,7 +66,7 @@ class _LoginFormState extends State<LoginForm> {
                 ),
                 decoration: InputDecoration(
                   hintText: 'Enter your email',
-                  prefix: Icon(
+                  prefixIcon: Icon(
                     Icons.email_outlined,
                     color: AppTheme.textSecondary,
                   ),
@@ -85,20 +85,72 @@ class _LoginFormState extends State<LoginForm> {
               ),
             ],
           ),
+
+          SizedBox(height: AppTheme.spacingLarge),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Password",
+                style: AppTheme.bodyMedium().copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: AppTheme.spacingSmall),
+              TextFormField(
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                style: AppTheme.bodyMedium().copyWith(
+                  color: AppTheme.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Enter your password',
+                  prefixIcon: Icon(
+                    Icons.lock_outline,
+                    color: AppTheme.textSecondary,
+                  ),
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                    ),
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your password';
+                  }
+
+                  if (value.length < 6) {
+                    return 'Password must be at least 6 characters';
+                  }
+
+                  return null;
+                },
+              ),
+            ],
+          ),
+
+          SizedBox(height: AppTheme.spacingLarge),
+          ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryLight,
+              padding: EdgeInsets.symmetric(vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+              ),
+            ),
+            child: Text("Sign in"),
+          ),
         ],
       ),
     );
   }
-}
-
-@Preview(name: 'Login Form')
-Widget loginFormPreview() {
-  return MaterialApp(
-    theme: ThemeData.dark(),
-    home: const Scaffold(
-      body: Center(
-        child: Padding(padding: EdgeInsets.all(24), child: LoginForm()),
-      ),
-    ),
-  );
 }
