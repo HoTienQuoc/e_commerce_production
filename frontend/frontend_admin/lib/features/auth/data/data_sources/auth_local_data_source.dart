@@ -18,10 +18,10 @@ abstract class AuthLocalDataSource {
   Future<bool> hasTokens();
 }
 
-class AuthLocalDataSourceImple implements AuthLocalDataSource {
+class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   final SharedPreferences sharedPreferences;
 
-  AuthLocalDataSourceImple({required this.sharedPreferences});
+  AuthLocalDataSourceImpl({required this.sharedPreferences});
 
   @override
   Future<void> cacheTokens(AuthTokensModel tokens) async {

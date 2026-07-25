@@ -35,11 +35,11 @@ abstract class AuthRemoteDataSource {
   Future<void> logout();
 }
 
-class AutoRemoteDataSourceImpl implements AuthRemoteDataSource {
+class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final ApiClient apiClient;
   final TokenManager tokenManager;
 
-  AutoRemoteDataSourceImpl({
+  AuthRemoteDataSourceImpl({
     required this.apiClient,
     required this.tokenManager,
   });

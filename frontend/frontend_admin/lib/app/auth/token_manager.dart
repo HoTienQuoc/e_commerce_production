@@ -12,7 +12,7 @@ class TokenManager {
   bool _isRefreshing = false;
   Completer<bool>? _refreshCompleter;
 
-  TokenManager(AuthLocalDataSource localDataSource)
+  TokenManager({required AuthLocalDataSource localDataSource})
     : _localDataSource = localDataSource,
       _authDio = Dio(
         BaseOptions(
