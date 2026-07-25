@@ -12,7 +12,7 @@ import 'package:frontend_admin/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final sl = GetIt.instance;
+final sl = GetIt.instance; // sl = Service locator
 
 Future<void> init() async {
   // Core service that don't depend on other services
