@@ -37,6 +37,54 @@ class _LoginFormState extends State<LoginForm> {
             ),
             textAlign: TextAlign.center,
           ),
+          SizedBox(height: AppTheme.spacingLarge),
+
+          Text(
+            "Please fill in your unique admin login details below",
+            style: AppTheme.bodyMedium().copyWith(
+              color: AppTheme.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: AppTheme.spacingLarge * 1.5),
+
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Email address",
+                style: AppTheme.bodyMedium().copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: AppTheme.spacingSmall),
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                style: AppTheme.bodyMedium().copyWith(
+                  color: AppTheme.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Enter your email',
+                  prefix: Icon(
+                    Icons.email_outlined,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your email';
+                  }
+
+                  if (!value.contains('@')) {
+                    return 'Please enter a valid email';
+                  }
+
+                  return null;
+                },
+              ),
+            ],
+          ),
         ],
       ),
     );

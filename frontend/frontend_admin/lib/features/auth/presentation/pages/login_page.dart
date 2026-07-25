@@ -2,6 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
+import 'package:frontend_admin/core/utils/responsive_helper.dart';
+import 'package:frontend_admin/features/auth/presentation/widget/login_form.dart';
+import 'package:glassmorphism/glassmorphism.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -64,7 +67,41 @@ class _LoginPageState extends State<LoginPage>
 
           Center(
             child: SingleChildScrollView(
-              child: Padding(padding: EdgeInsets.symmetric()),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: ResponsiveHelper.isMobile(context)
+                      ? AppTheme.spacingMedium
+                      : 0,
+                ),
+                child: GlassmorphicContainer(
+                  width: ResponsiveHelper.isMobile(context)
+                      ? double.infinity
+                      : 450,
+                  height: 600,
+                  borderRadius: 20,
+                  blur: 20,
+                  alignment: Alignment.bottomCenter,
+                  border: 2,
+                  linearGradient: LinearGradient(
+                    colors: [
+                      AppTheme.textPrimary.withAlpha((0.1 * 255).round()),
+                      AppTheme.textPrimary.withAlpha((0.05 * 255).round()),
+                    ],
+                    stops: const [0.1, 1],
+                  ),
+                  borderGradient: LinearGradient(
+                    colors: [
+                      AppTheme.textPrimary.withAlpha((0.5 * 255).round()),
+                      AppTheme.textPrimary.withAlpha((0.1 * 255).round()),
+                    ],
+                    stops: const [0.1, 1],
+                  ),
+                  child: Padding(
+                    padding: EdgeInsetsGeometry.all(AppTheme.spacingLarge),
+                    child: const LoginForm(),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
