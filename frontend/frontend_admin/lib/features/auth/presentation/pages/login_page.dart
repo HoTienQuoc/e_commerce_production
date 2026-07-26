@@ -1,8 +1,10 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/core/utils/responsive_helper.dart';
+import 'package:frontend_admin/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:frontend_admin/features/auth/presentation/widget/login_form.dart';
 import 'package:glassmorphism/glassmorphism.dart';
 
@@ -36,75 +38,92 @@ class _LoginPageState extends State<LoginPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // animated background
-          AnimatedBuilder(
-            animation: _backgroundController,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: _particleSystem.createPainter(
-                  _backgroundController.value,
+      body: BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is Authenticated) {
+          } else if (state is AuthError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  state.message,
+                  style: AppTheme.bodyMedium().copyWith(color: Colors.white),
                 ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppTheme.primaryDark.withAlpha((0.9 * 255).round()),
-                        AppTheme.primaryMedium.withAlpha((0.7 * 255).round()),
-                        AppTheme.primaryLight.withAlpha((0.5 * 255).round()),
-                      ],
+                backgroundColor: AppTheme.negative,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        },
+        child: Stack(
+          children: [
+            // animated background
+            AnimatedBuilder(
+              animation: _backgroundController,
+              builder: (context, child) {
+                return CustomPaint(
+                  painter: _particleSystem.createPainter(
+                    _backgroundController.value,
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppTheme.primaryDark.withAlpha((0.9 * 255).round()),
+                          AppTheme.primaryMedium.withAlpha((0.7 * 255).round()),
+                          AppTheme.primaryLight.withAlpha((0.5 * 255).round()),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              },
+            ),
 
-          ..._buildDecorativeElements(),
+            ..._buildDecorativeElements(),
 
-          Center(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: ResponsiveHelper.isMobile(context)
-                      ? AppTheme.spacingMedium
-                      : 0,
-                ),
-                child: GlassmorphicContainer(
-                  width: ResponsiveHelper.isMobile(context)
-                      ? double.infinity
-                      : 450,
-                  height: 600,
-                  borderRadius: 20,
-                  blur: 20,
-                  alignment: Alignment.bottomCenter,
-                  border: 2,
-                  linearGradient: LinearGradient(
-                    colors: [
-                      AppTheme.textPrimary.withAlpha((0.1 * 255).round()),
-                      AppTheme.textPrimary.withAlpha((0.05 * 255).round()),
-                    ],
-                    stops: const [0.1, 1],
+            Center(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: ResponsiveHelper.isMobile(context)
+                        ? AppTheme.spacingMedium
+                        : 0,
                   ),
-                  borderGradient: LinearGradient(
-                    colors: [
-                      AppTheme.textPrimary.withAlpha((0.5 * 255).round()),
-                      AppTheme.textPrimary.withAlpha((0.1 * 255).round()),
-                    ],
-                    stops: const [0.1, 1],
-                  ),
-                  child: Padding(
-                    padding: EdgeInsetsGeometry.all(AppTheme.spacingLarge),
-                    child: const LoginForm(),
+                  child: GlassmorphicContainer(
+                    width: ResponsiveHelper.isMobile(context)
+                        ? double.infinity
+                        : 450,
+                    height: 600,
+                    borderRadius: 20,
+                    blur: 20,
+                    alignment: Alignment.bottomCenter,
+                    border: 2,
+                    linearGradient: LinearGradient(
+                      colors: [
+                        AppTheme.textPrimary.withAlpha((0.1 * 255).round()),
+                        AppTheme.textPrimary.withAlpha((0.05 * 255).round()),
+                      ],
+                      stops: const [0.1, 1],
+                    ),
+                    borderGradient: LinearGradient(
+                      colors: [
+                        AppTheme.textPrimary.withAlpha((0.5 * 255).round()),
+                        AppTheme.textPrimary.withAlpha((0.1 * 255).round()),
+                      ],
+                      stops: const [0.1, 1],
+                    ),
+                    child: Padding(
+                      padding: EdgeInsetsGeometry.all(AppTheme.spacingLarge),
+                      child: const LoginForm(),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

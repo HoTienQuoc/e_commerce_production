@@ -1,5 +1,7 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend_admin/features/auth/presentation/bloc/auth_bloc.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -137,16 +139,38 @@ class _LoginFormState extends State<LoginForm> {
           ),
 
           SizedBox(height: AppTheme.spacingLarge),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryLight,
-              padding: EdgeInsets.symmetric(vertical: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
-              ),
-            ),
-            child: Text("Sign in"),
+          BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, state) {
+              return ElevatedButton(
+                onPressed: state is AuthLoading
+                    ? null
+                    : () {
+                        if (_formKey.currentState!.validate()) {
+                          context.read<AuthBloc>().add(
+                            LoginEvent(
+                              email: _emailController.text,
+                              password: _passwordController.text,
+                            ),
+                          );
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryLight,
+                  padding: EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                      AppTheme.borderRadiusSmall,
+                    ),
+                  ),
+                ),
+                child: Text(
+                  "Sign in",
+                  style: AppTheme.bodyLarge().copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
