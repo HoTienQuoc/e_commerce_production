@@ -1,20 +1,22 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:frontend_admin/features/auth/presentation/pages/login_page.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:frontend_admin/app/app.dart';
+import 'package:frontend_admin/app/app_bloc_observer.dart';
+import 'package:frontend_admin/core/di/injection_container.dart' as di;
+import 'package:frontend_admin/features/auth/presentation/bloc/auth_bloc.dart';
 
-void main() {
-  runApp(const MyApp());
+// Global Error handler for uncaught exceptions
+void _logError(Object error, StackTrace stack) {
+  debugPrint('Unhandled exceptions: $error');
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: const LoginPage(),
-    );
-  }
+Future<void> main() async {
+  await runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    Bloc.observer = AppBlocObserver();
+    await di.init();
+    final authBloc = di.sl<AuthBloc>()..add(CheckAuthStatusEvent());
+    runApp(MyApp(authBloc: authBloc));
+  }, _logError);
 }

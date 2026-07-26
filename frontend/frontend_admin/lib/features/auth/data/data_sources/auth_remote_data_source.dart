@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:frontend_admin/app/auth/token_manager.dart';
+import 'package:frontend_admin/core/auth/token_manager.dart';
 import 'package:frontend_admin/core/constants/api_endpoints.dart';
 import 'package:frontend_admin/core/errors/exceptions.dart';
 import 'package:frontend_admin/core/network/api_client.dart';

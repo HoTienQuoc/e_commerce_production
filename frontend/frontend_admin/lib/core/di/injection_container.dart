@@ -1,6 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
-import 'package:frontend_admin/app/auth/token_manager.dart';
+import 'package:frontend_admin/core/auth/token_manager.dart';
 import 'package:frontend_admin/core/network/api_client.dart';
 import 'package:frontend_admin/core/network/network_info.dart';
 import 'package:frontend_admin/features/auth/data/data_sources/auth_local_data_source.dart';

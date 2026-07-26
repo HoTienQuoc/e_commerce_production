@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import 'package:frontend_admin/app/auth/token_manager.dart';
+import 'package:frontend_admin/core/auth/token_manager.dart';
 import 'package:frontend_admin/core/errors/exceptions.dart';
 import 'package:frontend_admin/core/errors/failure.dart';
 import 'package:frontend_admin/core/network/network_info.dart';
