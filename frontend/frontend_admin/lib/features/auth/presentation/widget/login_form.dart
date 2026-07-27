@@ -163,12 +163,23 @@ class _LoginFormState extends State<LoginForm> {
                     ),
                   ),
                 ),
-                child: Text(
-                  "Sign in",
-                  style: AppTheme.bodyLarge().copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                child: state is AuthLoading
+                    ? SizedBox(
+                        height: 20,
+                        width: 10,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppTheme.textPrimary,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        "Sign in",
+                        style: AppTheme.bodyLarge().copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
               );
             },
           ),
