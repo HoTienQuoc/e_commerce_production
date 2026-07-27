@@ -72,10 +72,43 @@ class DashboardHeader extends StatelessWidget {
                     ),
                   ),
                 ),
+                SizedBox(width: AppTheme.spacingMedium),
+                IconButton(
+                  icon: Stack(
+                    children: [
+                      Icon(
+                        Icons.notifications_outlined,
+                        color: AppTheme.textPrimary,
+                      ),
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          padding: EdgeInsets.all(AppTheme.spacingXSmall),
+                          decoration: BoxDecoration(
+                            color: AppTheme.negative,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '3',
+                            style: AppTheme.bodyXSmall().copyWith(
+                              color: AppTheme.textPrimary,
+                              fontSize: 8,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  onPressed: () {},
+                ),
+                SizedBox(width: AppTheme.spacingMedium),
+                // ProfileDropdown(user: user);
               ],
             ),
           );
         }
+        return Container();
       },
     );
   }
