@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/core/utils/responsive_helper.dart';
 import 'package:frontend_admin/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:frontend_admin/features/auth/presentation/widget/profile_dropdown.dart';
 
 class DashboardHeader extends StatelessWidget {
   final VoidCallback? onMenuPressed;
@@ -103,7 +104,7 @@ class DashboardHeader extends StatelessWidget {
                   onPressed: () {},
                 ),
                 SizedBox(width: AppTheme.spacingMedium),
-                // ProfileDropdown(user: user);
+                ProfileDropdown(user: user),
               ],
             ),
           );
