@@ -92,7 +92,30 @@ class _DashboardSideBarState extends State<DashboardSideBar>
             return Container(
               width: currentWidth,
               color: AppTheme.cardBackground,
-              child: Column(children: [_buildHeader(currentWidth, showText)]),
+              child: Column(
+                children: [
+                  _buildHeader(currentWidth, showText),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      key: const PageStorageKey('sidebar_scroll_key'),
+                      child: Column(
+                        children: [
+                          _buildNavItem(
+                            icon: Icons.dashboard_outlined,
+                            selectedIcon: Icons.dashboard,
+                            title: 'Dashboard',
+                            route: '/dashboard',
+                            isSelected: currentRoute == '/dashboard',
+                            currentWidth: currentWidth,
+                            showText: showText,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  _buildFooter(currentWidth, showText),
+                ],
+              ),
             );
           },
         );
@@ -270,10 +293,113 @@ class _DashboardSideBarState extends State<DashboardSideBar>
         ),
       ),
     );
-    return Container();
+    if (!showText) {
+      return Tooltip(
+        message: title,
+        preferBelow: false,
+        textStyle: AppTheme.bodySmall().copyWith(color: AppTheme.textPrimary),
+        decoration: BoxDecoration(
+          color: AppTheme.primary.withAlpha((0.9 * 255).round()),
+          borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.textMuted,
+              blurRadius: 4,
+              offset: const Offset(2, 2),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        waitDuration: const Duration(milliseconds: 500),
+        child: navItem,
+      );
+    }
+    return navItem;
   }
 
   void _handleNavigation(BuildContext context, String route) {
     _navigationService.pushNamed(route);
+  }
+
+  Widget _buildFooter(double currentWidth, bool showText) {
+    if (!showText) {
+      return Container(
+        width: currentWidth,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: AppTheme.dividerColor.withAlpha((0.2 * 255).round()),
+            ),
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.keyboard_double_arrow_right,
+              color: AppTheme.textSecondary.withAlpha((0.6 * 255).round()),
+              size: 16,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Expand',
+              style: AppTheme.bodySmall().copyWith(
+                color: AppTheme.textSecondary.withAlpha((0.6 * 255).round()),
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return Container(
+      width: currentWidth,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: AppTheme.dividerColor.withAlpha((0.2 * 255).round()),
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            "Need help? ",
+            style: AppTheme.bodyMedium().copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryLight.withAlpha((0.2 * 255).round()),
+              borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.headset_mic_outlined,
+                  color: AppTheme.accentBlue,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Support Center',
+                    style: AppTheme.bodySmall().copyWith(
+                      color: AppTheme.accentBlue,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.clip,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
