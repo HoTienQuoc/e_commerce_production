@@ -200,4 +200,80 @@ class _DashboardSideBarState extends State<DashboardSideBar>
       ],
     );
   }
+
+  Widget _buildNavItem({
+    required IconData icon,
+    required IconData selectedIcon,
+    required String title,
+    required String route,
+    required bool isSelected,
+    required double currentWidth,
+    required bool showText,
+  }) {
+    final navItem = AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      width: currentWidth,
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? AppTheme.primaryLight.withAlpha((0.15 * 255).round())
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+          onTap: () => _handleNavigation(context, route),
+          splashColor: AppTheme.primaryLight.withAlpha((0.1 * 255).round()),
+          hoverColor: AppTheme.primaryLight.withAlpha((0.05 * 255).round()),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 20,
+                  child: Icon(
+                    isSelected ? selectedIcon : icon,
+                    color: isSelected
+                        ? AppTheme.accentBlue
+                        : AppTheme.textSecondary,
+                    size: 20,
+                  ),
+                ),
+                if (showText && currentWidth > 100) ...[
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: AnimatedOpacity(
+                      opacity: _opacityAnimation.value,
+                      duration: const Duration(milliseconds: 100),
+                      child: Text(
+                        title,
+                        style: AppTheme.bodyMedium().copyWith(
+                          color: isSelected
+                              ? AppTheme.accentBlue
+                              : AppTheme.textSecondary,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.clip,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    return Container();
+  }
+
+  void _handleNavigation(BuildContext context, String route) {
+    _navigationService.pushNamed(route);
+  }
 }
