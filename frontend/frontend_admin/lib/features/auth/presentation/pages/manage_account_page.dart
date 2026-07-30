@@ -114,7 +114,19 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
                         // Profile picture section
                         Center(
                           child: Column(
-                            children: [_buildProfilePicture(currentUser)],
+                            children: [
+                              _buildProfilePicture(currentUser),
+                              SizedBox(height: AppTheme.spacingMedium),
+                              TextButton.icon(
+                                onPressed: _pickImage,
+                                icon: Icon(Icons.photo_library),
+                                label: Text('Change profile Picture'),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: AppTheme.accentBlue,
+                                ),
+                              ),
+                              SizedBox(height: AppTheme.spacingLarge),
+                            ],
                           ),
                         ),
                       ],
@@ -142,8 +154,54 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
           ),
           child: ClipOval(child: _buildProfileImageContent(user)),
         ),
+        Positioned(
+          bottom: 0,
+          right: 0,
+          child: Container(
+            padding: EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppTheme.accentBlue,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+            child: GestureDetector(
+              onTap: _pickImage,
+              child: Icon(Icons.camera_alt, color: Colors.white, size: 20),
+            ),
+          ),
+        ),
       ],
     );
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+      if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
+        setState(() {
+          _webImageBytes = bytes;
+          _imageChanged = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to pick image: $e',
+              style: AppTheme.bodyMedium(),
+            ),
+            backgroundColor: AppTheme.negative,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildProfileImageContent(UserEntity user) {
