@@ -66,9 +66,11 @@ class _DashboardSideBarState extends State<DashboardSideBar>
   void didUpdateWidget(covariant DashboardSideBar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isExpanded != oldWidget.isExpanded) {
-      _animationController.forward();
-    } else {
-      _animationController.reverse();
+      if (widget.isExpanded) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
     }
   }
 

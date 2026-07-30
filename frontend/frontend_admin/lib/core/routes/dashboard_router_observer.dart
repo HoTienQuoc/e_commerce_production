@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:frontend_admin/core/widget/dashboard_side_bar.dart';
 
-class DashboardRouter extends NavigatorObserver {
+class DashboardRouterObserver extends NavigatorObserver {
   final NavigationController navigationController;
 
-  DashboardRouter(this.navigationController);
+  DashboardRouterObserver(this.navigationController);
 
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {

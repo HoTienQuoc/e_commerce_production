@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend_admin/core/auth/token_manager.dart';
 import 'package:frontend_admin/core/network/api_client.dart';
 import 'package:frontend_admin/core/network/network_info.dart';
+import 'package:frontend_admin/core/routes/dashboard_router_observer.dart';
 import 'package:frontend_admin/core/services/navigation_service.dart';
 import 'package:frontend_admin/core/widget/dashboard_side_bar.dart';
 import 'package:frontend_admin/features/auth/data/data_sources/auth_local_data_source.dart';
@@ -32,6 +33,7 @@ Future<void> _initCoreServices() async {
   );
   sl.registerLazySingleton(() => NavigationController());
   sl.registerLazySingleton(() => NavigationService());
+  sl.registerLazySingleton(() => DashboardRouterObserver(sl()));
   // Shared Preferences
   final sharedPreferences = await SharedPreferences.getInstance();
   sl.registerLazySingleton(() => sharedPreferences);

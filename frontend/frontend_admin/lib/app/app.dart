@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
+import 'package:frontend_admin/core/widget/dashboard_shell.dart';
 import 'package:frontend_admin/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:frontend_admin/features/auth/presentation/pages/login_page.dart';
 
@@ -28,7 +29,7 @@ class MyApp extends StatelessWidget {
 
   Widget _buildHome(AuthState state) {
     if (state is Authenticated) {
-      return const Center(child: Text("You are logged in"));
+      return const DashboardShell();
     }
 
     if (state is UnAuthenticated || state is AuthError) {
