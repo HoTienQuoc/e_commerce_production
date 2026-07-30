@@ -126,6 +126,40 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
                                 ),
                               ),
                               SizedBox(height: AppTheme.spacingLarge),
+                              _buildTextField(
+                                controller: _usernameController,
+                                labelText: 'Username',
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Username cannot be empty';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              SizedBox(height: AppTheme.spacingMedium),
+                              _buildTextField(
+                                controller: _emailController,
+                                labelText: 'Email',
+                                readOnly: true,
+                              ),
+                              SizedBox(height: AppTheme.spacingMedium),
+                              _buildTextField(
+                                controller: _firstNameController,
+                                labelText: "First Name",
+                              ),
+                              SizedBox(height: AppTheme.spacingMedium),
+                              _buildTextField(
+                                controller: _lastNameController,
+                                labelText: "Last Name",
+                              ),
+                              SizedBox(height: AppTheme.spacingMedium),
+                              _buildTextField(
+                                controller: _phoneController,
+                                labelText: "Phone Number",
+                                keyboardType: TextInputType.phone,
+                              ),
+                              SizedBox(height: AppTheme.spacingLarge),
+                              _buildUpdateButton(state),
                             ],
                           ),
                         ),
@@ -138,6 +172,64 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildUpdateButton(AuthState state) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: state is! ProfileUpdating ? _updateAccount : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.primaryLight,
+          padding: EdgeInsets.symmetric(
+            horizontal: AppTheme.spacingLarge,
+            vertical: AppTheme.spacingMedium,
+          ),
+        ),
+        child: state is ProfileUpdating
+            ? CircularProgressIndicator(color: Colors.white)
+            : Text(
+                'Update Account',
+                style: AppTheme.bodyMedium().copyWith(color: Colors.white),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String labelText,
+    bool readOnly = false,
+    String? Function(String?)? validator,
+    TextInputType? keyboardType,
+  }) {
+    return TextFormField(
+      controller: controller,
+      readOnly: readOnly,
+      validator: validator,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: labelText,
+        labelStyle: AppTheme.bodyMedium(),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+          borderSide: BorderSide(color: AppTheme.borderColor),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+          borderSide: BorderSide(color: AppTheme.borderColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+          borderSide: BorderSide(color: AppTheme.borderColor, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+          borderSide: BorderSide(color: AppTheme.negative),
+        ),
+      ),
+      style: AppTheme.bodyMedium(),
     );
   }
 
