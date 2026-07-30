@@ -103,11 +103,95 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
                   final currentUser = state is Authenticated
                       ? state.user
                       : widget.user;
+
+                  return Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Manage Account', style: AppTheme.headingMedium()),
+                        SizedBox(height: AppTheme.spacingLarge),
+                        // Profile picture section
+                        Center(
+                          child: Column(
+                            children: [_buildProfilePicture(currentUser)],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
                 },
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildProfilePicture(UserEntity user) {
+    return Stack(
+      children: [
+        Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppTheme.accentBlue.withAlpha((0.2 * 255).round()),
+            border: Border.all(color: AppTheme.borderColor, width: 2),
+          ),
+          child: ClipOval(child: _buildProfileImageContent(user)),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileImageContent(UserEntity user) {
+    if (_imageChanged && _webImageBytes != null) {
+      return Image.memory(
+        _webImageBytes!,
+        fit: BoxFit.cover,
+        width: 120,
+        height: 120,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildFallbackAvatar(user);
+        },
+      );
+    }
+    if (user.profilePictureUrl != null && user.profilePictureUrl!.isNotEmpty) {
+      return Image.network(
+        user.profilePictureUrl!,
+        fit: BoxFit.cover,
+        width: 120,
+        height: 120,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildFallbackAvatar(user);
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) {
+            return child;
+          }
+          return Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                  : null,
+              strokeWidth: 2,
+              color: AppTheme.accentBlue,
+            ),
+          );
+        },
+      );
+    }
+    return _buildFallbackAvatar(user);
+  }
+
+  Widget _buildFallbackAvatar(UserEntity user) {
+    return Center(
+      child: Text(
+        user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : 'U',
+        style: AppTheme.headingLarge().copyWith(color: AppTheme.accentBlue),
       ),
     );
   }
