@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:frontend_admin/core/di/injection_container.dart';
+import 'package:frontend_admin/core/routes/route_names.dart';
+import 'package:frontend_admin/core/services/navigation_service.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/features/auth/domain/entities/user_entity.dart';
+import 'package:frontend_admin/features/auth/presentation/bloc/auth_bloc.dart';
 
 class ProfileDropdown extends StatelessWidget {
   final UserEntity user;
@@ -9,6 +14,19 @@ class ProfileDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
+      onSelected: (String value) {
+        switch (value) {
+          case 'manage_account':
+            sl<NavigationService>().pushNamed(
+              RouteNames.profile,
+              arguments: user,
+            );
+            break;
+          case 'logout':
+            context.read<AuthBloc>().add(LogoutEvent());
+            break;
+        }
+      },
       offset: const Offset(0, 40),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),

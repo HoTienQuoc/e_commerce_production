@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/features/auth/domain/entities/user_entity.dart';
+import 'package:frontend_admin/features/auth/domain/usecases/update_profile_usecase.dart';
 import 'package:frontend_admin/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -53,6 +54,26 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
     if (oldWidget.user != widget.user) {
       _initController();
     }
+  }
+
+  void _updateAccount() {
+    if (!_validateForm()) {
+      return;
+    }
+    final updateParams = UpdateProfileParams(
+      _firstNameController.text,
+      _lastNameController.text,
+      _phoneController.text,
+      _imageChanged ? _webImageBytes : null,
+    );
+    context.read<AuthBloc>().add(UpdateProfileEvent(updateParams));
+  }
+
+  bool _validateForm() {
+    if (_formKey.currentState?.validate() ?? false) {
+      return true;
+    }
+    return false;
   }
 
   @override
