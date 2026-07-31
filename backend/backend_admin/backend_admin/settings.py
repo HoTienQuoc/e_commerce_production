@@ -35,7 +35,11 @@ INSTALLED_APPS = [
     "rest_framework",
 
     # local apps
-    'authentication'
+    'authentication',
+    'ecommerce',
+    'inventory',
+    'recommendations',
+    'admin_dashboard',
 ]
 
 MIDDLEWARE = [
