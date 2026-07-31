@@ -135,7 +135,7 @@ class ProductVariant(models.Model):
     def save(self, *args, **kwargs):
         if not self.sku:
             product_code = self.product.name[:3].upper()
-            variant_code = '-'.join(f"{key[:1]{val[:2]}}" for key, val in sorted(self.attributes.items()))
+            variant_code = '-'.join(f"{key[:1]}{val[:2]}" for key, val in sorted(self.attributes.items()))
             self.sku = f"{product_code}-{variant_code}-{uuid.uuid4().hex[:6].upper()}"
         super().save(*args, **kwargs)
 
@@ -143,6 +143,73 @@ class ProductVariant(models.Model):
     def effective_price(self):
         return self.discount_price if self.discount_price else self.price or self.product.price
 
-    
+
+class Order(models.Model):
+    STATUS_CHOICES = [
+        ('completed', 'Completed'),
+        ('processing', 'Processing'),
+        ('rejected', 'Rejected'),
+        ('on_hold', 'On Hold'),
+        ('in_transit', 'In Transit'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey('authentication.CustomUser', on_delete=models.CASCADE)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    shipping_address = models.TextField()
+    contact = models.CharField(max_length=20)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='processing')
+    tracking_number = models.CharField(max_length=60, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    categories = models.ManyToManyField(Category, through='OrderCategory', related_name='orders')
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'status']),
+            models.Index(fields=['created_at'])
+        ]
+
+    def __str__(self):
+        return f"Order {self.id} - {self.user.get_full_name()}"
+
+
+class OrderCategory(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_togeter = ('order', 'category')
+
+class OrderItem(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    order = models.ForeignKey(Order, related_name='itmes', on_delete=models.CASCADE)
+    quantity = models.IntegerField()
+    size = models.CharField(max_length=10)
+    variation = models.CharField(max_length=20)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['order', 'product'])
+        ]
+
+class Review(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(Product, related_name='reviews', on_delete=models.CASCADE)
+    rating = models.IntegerField()
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['product', 'rating']),
+            models.Index(fields=['user']),
+        ]
+        unique_together = ['user', 'product']
+
+
 
 
