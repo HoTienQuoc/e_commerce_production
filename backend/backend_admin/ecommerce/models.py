@@ -288,4 +288,65 @@ class Banner(models.Model):
         return 'Active'
 
 
+class FlashSale(models.Model):
+    """Flash sale model for time-limited promotions"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    image = models.ImageField(upload_to='flash_sales/', null=True, blank=True)
+    discount_percentage = models.IntegerField(validators=[MinValueValidator(1), MaxLengthValidator(99)])
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    total_revenue = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    revenue_increase = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    order_increase = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    total_orders = models.IntegerField(default=0)
+    units_sold = models.IntegerField(default=0)
+    units_sold_increases = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    conversion_rate = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    conversion_rate_increase = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    purchase_limit = models.IntegerField(null=True, blank=True)
+    minimum_order_value = models.DecimalField(max_digits=6, decimal_places=2, default=0, null=True, blank=True)
+    allow_stacking_discounts = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    @property
+    def is_ongoing(self):
+        now = timezone.now()
+        return self.is_active and self.start_date <= now and self.end_date > now
+
+    @property
+    def time_remaining(self):
+        if not self.is_ongoing:
+            return None
+        return self.end_date - timezone.now()
+
+    @property
+    def status(self):
+        now = timezone.now()
+        if not self.is_active:
+            return 'Inactive'
+        if self.start_date > now:
+            return 'Upcoming'
+        if self.end_date <= now:
+            return 'Expired'
+        return 'Active'
+
+    @property
+    def average_order_value(self):
+        if self.total_orders > 0:
+            return self.total_revenue / self.total_orders
+        return 0
+
+    def __str__(self):
+        return f"{self.title} ({self.status})"
+
+
+
+
 
