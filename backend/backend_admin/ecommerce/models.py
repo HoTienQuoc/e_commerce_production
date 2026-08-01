@@ -347,6 +347,48 @@ class FlashSale(models.Model):
         return f"{self.title} ({self.status})"
 
 
+class FlashSaleItem(models.Model):
+    """Individual items included in a flash sale"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    flash_sale = models.ForeignKey(FlashSale, related_name='items', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    override_discount = models.IntegerField(null=True, blank=True)
+    stock_limit = models.IntegerField(null=True, blank=True)
+    units_sold = models.IntegerField(default=0)
+    item_purchase_limit = models.IntegerField(null=True, blank=True)
+    revenue = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    class Meta:
+        unique_together = ['flash_sale', 'product']
+
+    @property
+    def effective_discount(self):
+        if self.override_discount is not None:
+            return self.override_discount
+        return self.flash_sale.discount_percentage
+
+    @property
+    def remaining_stock(self):
+        if self.stock_limit is None:
+            return None
+        return self.stock_limit - self.units_sold
+
+    @property
+    def is_stock_limited(self):
+        return self.stock_limit is not None
+
+    @property
+    def is_purchase_limited(self):
+        return self.item_purchase_limit is not None or self.flash_sale.purchase_limit is not None
+
+    @property
+    def effective_purchase_limit(self):
+        if self.item_purchase_limit is not None:
+            return self.item_purchase_limit
+        return self.flash_sale.purchase_limit
+
+    def __str__(self):
+        return f"{self.product.name} in {self.flash_sale.title}"
 
 
 
