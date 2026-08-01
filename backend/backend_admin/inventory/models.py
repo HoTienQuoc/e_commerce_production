@@ -47,5 +47,76 @@ class InventoryRecord(models.Model):
             return round((max(0, sold) / self.initial_stock)*100, 2)
         return 0.0
 
-    @property
-    def 
+    def get_adjustment_type_display(self, quantity, adjustment_type='manual', reason='', reference='', admin=None):
+        if self.current_stock + quantity < 0:
+            return False, "Adjustment would result in negative stock", None
+        adjustment = StockAdjustment.objects.create(
+            inventory = self,
+            quantity = quantity,
+            previous_stock = self.current_stock,
+            new_stock = self.current_stock + quantity,
+            adjustment_type = adjustment_type,
+            reason = reason,
+            reference=reference,
+            admin = admin
+        )
+        return True, "Stock adjusted successfully", adjustment
+
+    def __str__(self):
+        return f"Inventory for {self.product.name} (Current: {self.current_stock})"
+
+
+class StockAdjustment(models.Model):
+    """Record all stock movements and adjustments"""
+    ADJUSTMENT_TYPES = [
+        ('add', 'Add Stock'),
+        ('remove', 'Remove Stock'),
+        ('set', 'Set Stock'),
+        ('manual', 'Manual Adjustment'),
+        ('restock', 'Restock'),
+        ('inventory', 'Inventory Correction'),
+        ('damaged', 'Damages/Lost'),
+        ('sale', 'Sale'),
+        ('return', 'Return'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    inventory = models.ForeignKey(InventoryRecord, on_delete=models.CASCADE, related_name='adjustments')
+    quantity = models.IntegerField(help_text="Amount of change(positive for increase, negative for decrease)")
+    previous_stock = models.IntegerField(help_text="Stock level before ajustment")
+    adjustment_type = models.CharField(max_length=20, choices=ADJUSTMENT_TYPES, default='manual')
+    reference = models.CharField(max_length=100, blank=True, help_text="Order number, invoice number, etc.")
+    reason = models.TextField(blank=True)
+    admin = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta: 
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['adjustment_type']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['inventory']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            with transaction.atomic():
+                inventory = InventoryRecord.objects.select_for_update().get(pk=self.inventory.pk)
+
+                if inventory.current_stock + self.quantity < 0:
+                    raise ValueError("Adjustment would result in negative stock")
+                self.previous_stock = inventory.current_stock
+                self.new_stock = inventory.current_stock + self.quantity
+
+                super().save(*args, **kwargs)
+
+                inventory.current_stock = self.new_stock
+                inventory.save(update_fields = ['current_stock', 'last_updated'])
+
+        else:
+            super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.get_adjustment_type_display()} (self.quantity:+3) for {self.inventory.product.name}"
+
+
