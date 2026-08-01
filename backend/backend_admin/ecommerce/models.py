@@ -197,7 +197,8 @@ class OrderItem(models.Model):
 
 class Review(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(Product, related_name='reviews', on_delete=models.CASCADE)
+    user = models.ForeignKey('authentication.CustomUser', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, related_name='reviews', on_delete=models.CASCADE)
     rating = models.IntegerField()
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -210,6 +211,81 @@ class Review(models.Model):
         ]
         unique_together = ['user', 'product']
 
+
+class WishList(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey('authentication.CustomUser', on_delete=models.CASCADE)
+    products = models.ManyToManyField(Product, through='WishListItem')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user']),
+        ]
+
+class WishListItem(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    wishlist = models.ForeignKey(WishList, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['wishlist', 'product']
+        indexes = [
+            models.Index(fields=['wishlist', 'product']),
+        ]
+
+
+class Banner(models.Model):
+    """Promotional banners for homepage carousel"""
+    title = models.CharField(max_length=180)
+    subtitle = models.CharField(max_length=200, blank=True)
+    image = models.ImageField(upload_to='banners/')
+    link_url = models.CharField(max_length=255, blank=True)
+    link_text = models.CharField(max_length=50, blank=True)
+    is_active = models.BooleanField(default=True)
+    start_date = models.DateTimeField(null=True, blank=True)
+    end_date = models.DateTimeField(null=True, blank=True)
+    display_order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    flash_sale = models.ForeignKey('FlashSale', on_delete=models.SET_NULL, null=True, blank=True, related_name='banners')
+
+    class Meta:
+        ordering = ['display_order', 'created_at']
+        indexes = [
+            models.Index(fields=['is_active']),
+            models.Index(fields=['display_order']),
+            models.Index(fields=['flash_sale']),
+        ]
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def is_currently_active(self):
+        """Check if banner is active and within date range"""
+        if not self.is_active:
+            return False
+        now = timezone.now()
+        if self.start_date and self.start_date > now:
+            return False
+        if self.end_date and self.end_date<=now:
+            return False
+        return True
+
+    @property
+    def status_display(self):
+        if not self.is_active:
+            return 'Inactive'
+        now = timezone.now()
+        if self.start_date and self.start_date > now:
+            return 'Scheduled'
+        if self.end_date and self.end_date<=now:
+            return 'Expired'
+        return 'Active'
 
 
 
