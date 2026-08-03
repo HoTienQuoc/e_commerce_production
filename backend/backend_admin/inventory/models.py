@@ -47,7 +47,7 @@ class InventoryRecord(models.Model):
             return round((max(0, sold) / self.initial_stock)*100, 2)
         return 0.0
 
-    def get_adjustment_type_display(self, quantity, adjustment_type='manual', reason='', reference='', admin=None):
+    def adjust_stock(self, quantity, adjustment_type='manual', reason='', reference='', admin=None):
         if self.current_stock + quantity < 0:
             return False, "Adjustment would result in negative stock", None
         adjustment = StockAdjustment.objects.create(
@@ -117,6 +117,68 @@ class StockAdjustment(models.Model):
             super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.get_adjustment_type_display()} (self.quantity:+3) for {self.inventory.product.name}"
+        return f"{self.get_adjustment_type_display()} (self.quantity:+3) for {self.inventory.product.name}" # pyright: ignore[reportAttributeAccessIssue]
+
+class InventoryLog(models.Model):
+    """Log for inventory-wide operations"""
+    product = models.ForeignKey('ecommerce.Product', on_delete=models.CASCADE, related_name='inventory_log')
+    previous_stock = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    current_stock = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    adjustment_style = models.CharField(max_length=20, choices=[
+        ('addition', 'Addition'),
+        ('reduction', 'Reduction'),
+        ('redistribution', 'Redistribution'),
+        ('sync', 'Sync')
+    ])
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        ordering = ['-created_at']
+
+class VariantStockLog(models.Model):
+    """Model to track all stock changes for product variants"""
+    product = models.ForeignKey('ecomerce.Product', on_delete=models.CASCADE, related_name='variant_stock_logs')
+    variant = models.ForeignKey('ecommerce.ProductVariant', on_delete=models.CASCADE, related_name='stock_logs')
+    previous_stock = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    current_stock = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    ADJUSTMENT_TYPES = (
+        ('addition', 'Addition'),
+        ('reduction', 'Reduction'),
+        ('redistribution', 'Redistribution'),
+        ('deletion', 'Deletion'),
+        ('no_change', 'No Change'),
+        ('initial_stock', 'Initial Stock'),
+        ('sync', 'Sync')
+    )
+
+    adjustment_type = models.CharField(max_length=20, choices=ADJUSTMENT_TYPES, default='no_change')
+    timestamp = models.DateTimeField(default=timezone.now())
+    performed_by = models.ForeignKey('authentication.CustomUser', on_delete=models.SET_NULL, null=True, blank=True, related_name='variant_stock_adjustments')
+    notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['product']),
+            models.Index(fields=['variant']),
+            models.Index(fields=['adjustment_type']),
+            models.Index(fields=['timestamp'])
+        ]
+
+    @property
+    def change_amount(self):
+        return self.current_stock - self.previous_stock
+
+    @property
+    def is_increase(self):
+        return self.current_stock > self.previous_stock
+
+    @property
+    def is_decrease(self):
+        return self.current_stock < self.previous_stock
+
+    def __str__(self):
+        return f"{self.variant}-{self.adjustment_type}-{self.timestamp.strfitem('%Y-%m-%d %H:%M')}"
+
 
 

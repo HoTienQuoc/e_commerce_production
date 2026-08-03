@@ -55,6 +55,26 @@ class Product(models.Model):
     cost = models.DecimalField(max_digits=10, decimal_places=2)
 
     @property
+    def stock(self):
+        """Return current stock from the related inventory record"""
+        inventory= getattr(self, 'inventory', None)
+        if inventory:
+            return inventory.current_stock
+        if self.variants.exists(): # pyright: ignore[reportAttributeAccessIssue]
+            return sum(self.variants.values_list('stock', flat=True)) # pyright: ignore[reportAttributeAccessIssue]
+        return 0
+
+    @property
+    def initial_stock(self):
+        inventory = getattr(self, 'inventory', None)
+        return inventory.initial_stock if inventory else 0
+
+    @property
+    def stock_status(self):
+        inventory = getattr(self, 'inventory', None)
+        return inventory.stock_status if inventory else 'unknown'
+    
+    @property
     def primary_image(self):
         """Return the primary image or the first image if no primary is set"""
         primary = self.images.filter(is_primary=True).first() # pyright: ignore[reportAttributeAccessIssue]
