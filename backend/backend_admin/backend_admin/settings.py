@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     # local apps
     'authentication',
     'ecommerce',
+    'analytics',
     'inventory',
     'recommendations',
     'admin_dashboard',
