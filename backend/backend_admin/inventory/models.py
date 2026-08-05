@@ -137,7 +137,7 @@ class InventoryLog(models.Model):
 
 class VariantStockLog(models.Model):
     """Model to track all stock changes for product variants"""
-    product = models.ForeignKey('ecomerce.Product', on_delete=models.CASCADE, related_name='variant_stock_logs')
+    product = models.ForeignKey('ecommerce.Product', on_delete=models.CASCADE, related_name='variant_stock_logs')
     variant = models.ForeignKey('ecommerce.ProductVariant', on_delete=models.CASCADE, related_name='stock_logs')
     previous_stock = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     current_stock = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -152,7 +152,7 @@ class VariantStockLog(models.Model):
     )
 
     adjustment_type = models.CharField(max_length=20, choices=ADJUSTMENT_TYPES, default='no_change')
-    timestamp = models.DateTimeField(default=timezone.now())
+    timestamp = models.DateTimeField(default=timezone.now)
     performed_by = models.ForeignKey('authentication.CustomUser', on_delete=models.SET_NULL, null=True, blank=True, related_name='variant_stock_adjustments')
     notes = models.TextField(blank=True, null=True)
 

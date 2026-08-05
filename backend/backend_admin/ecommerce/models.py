@@ -20,7 +20,7 @@ class Category(models.Model):
 
     class Meta:
         verbose_name_plural = 'Categories'
-        index = [
+        indexes = [
             models.Index(fields=['name']),
             models.Index(fields=['slug'])
         ]
@@ -95,9 +95,8 @@ class Product(models.Model):
 
     class Meta:
         indexes = [
-            models.Index('name', 'category'),
+            models.Index(fields=['name', 'category']),
             models.Index(fields=['price']),
-            models.Index(fields=['rating']),
             models.Index(fields=['rating']),
             models.Index(fields=['is_active']),
         ]
@@ -131,12 +130,12 @@ class ProductVariation(models.Model):
     updated_at = models.DateTimeField(auto_now=True) 
 
     class Meta:
-        unique_together = ('Product', 'name')
+        unique_together = ('product', 'name')
 
 
 class ProductVariant(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    product = models.ForeignKey(Product, related_name='variation_types', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, related_name='variants', on_delete=models.CASCADE)
     attributes = JSONField(null=True, blank=True)
     sku = models.CharField(max_length=100, blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -199,11 +198,12 @@ class OrderCategory(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
 
     class Meta:
-        unique_togeter = ('order', 'category')
+        unique_together = ('order', 'category')
 
 class OrderItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    order = models.ForeignKey(Order, related_name='itmes', on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField()
     size = models.CharField(max_length=10)
     variation = models.CharField(max_length=20)
