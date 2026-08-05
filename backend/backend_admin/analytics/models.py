@@ -55,4 +55,75 @@ class AnalysticsSumary(models.Model):
     bounce_rate = models.FloatField(default=0.0)
     avg_session_duration = models.DurationField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
+class UserSession(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey('authentication.CustomUser', on_delete=models.CASCADE, null=True)
+    session_id = models.CharField(max_length=100)
+    start_time = models.DateTimeField(auto_now_add=True)
+    end_time = models.DateTimeField(null=True)
+    pages_viewed = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class AnalysticsDashboard(models.Model):
+    id = models.UUIDField(primary_key=True,default=uuid.uuid4, editable=False)
+    date = models.DateField(unique=True)
+
+    #Revenue metrics
+    total_revenue = models.DecimalField(max_digits=12, decimal_places=2, default=2)
+    total_orders = models.IntegerField(default=0)
+    average_order_value = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    # User metrics
+    total_users = models.IntegerField(default=0)
+    new_users = models.IntegerField(default=0)
+    return_users = models.IntegerField(default=0)
+
+    # Product metrics
+    top_selling_products = models.JSONField(default=dict)
+    category_distribution = models.JSONField(default=dict)
+
+    # Cart metrics
+    cart_abandonment_rate = models.FloatField(default=0)
+    items_per_cart = models.FloatField(default=0)
+
+    # Performance metrics
+    conversion_rate = models.FloatField(default=0)
+    bounce_rate = models.FloatField(default=0)
+
+    created_at = models.DateField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['date'])
+        ]
+
+class UserBehavior(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    user = models.ForeignKey('authentication.CustomUser', on_delete=models.CASCADE, null=True, blank=True)
+    session_id = models.CharField(max_length=100, unique=True)
+
+    # Page navigation
+    page_views = models.IntegerField(default=0)
+    time_spent = models.DurationField(default=timedelta())
+    entry_page = models.CharField(max_length=255)
+    exit_page = models.CharField(max_length=255, blank=True)
+
+    # Search behavior
+    search_queries = models.JSONField(default=list)
+    filter_usage = models.JSONField(default=list)
+
+    # Cart behavior
+    cart_additions = models.IntegerField(default=0)
+    cart_removals = models.IntegerField(default=0)
+    cart_abandonment = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['session_id']),
+            models.Index(fields=['created_at']),
+        ]
