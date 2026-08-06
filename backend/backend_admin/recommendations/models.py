@@ -36,6 +36,7 @@ class SimilarProducts(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.ForeignKey('ecommerce.Product', on_delete=models.CASCADE, related_name='source_product')
     similar_product = models.ForeignKey('ecommerce.Product', on_delete=models.CASCADE, related_name='similar_to')
+    similarity_score = models.FloatField()
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
