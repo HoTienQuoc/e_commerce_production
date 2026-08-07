@@ -6,6 +6,7 @@ from django.utils.text import slugify
 from ecommerce.models import (Product, Category, ProductImage, ProductVariant, ProductVariation, Order, OrderItem)
 from inventory.models import InventoryRecord
 
+
 class ProductImageSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
 
@@ -30,40 +31,6 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         return data
-
-
-class ProductListSerializer(serializers.ModelSerializer):
-    category_name = serializers.CharField(source='category.name', read_only=True)
-    primary_image_url = serializers.SerializerMethodField()
-    stock_status = serializers.SerializerMethodField()
-    stock = serializers.IntegerField(read_only=True)
-
-    def get_stock_status(self, obj):
-        inventory = getattr(obj, 'inventory', None)
-        return inventory.stock_status if inventory else 'unknown'
-
-    class Meta:
-        model = Product
-        fields = [
-            'id', 'name', 'category', 'category_name', 'price', 'stock', 'discount_price', 'display_price', 'rating', 'primary_image_url', 'stock_status', 'is_active'
-        ]
-
-    def get_primary_image_url(self, obj):
-        request = self.context.get('request')
-        primary = obj.primary_image
-
-        if primary and primary.image:
-            if request:
-                return request.build_absolute_uri(primary.image.url)
-            return primary.image.url
-        return None
-
-    def to_representation(self, instance):
-        ret = super().to_representation(instance)
-        if self.context.get('include_all_images', False):
-            ret['all_image_urls'] = self.get_all_image_urls(instance) # pyright: ignore[reportAttributeAccessIssue]
-        return ret
-
 
 class ProductVariantSerializers(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
@@ -120,4 +87,100 @@ class ProductVariationSerializer(serializers.ModelSerializer):
             'created_at': {'read_only': True},
             'updated_at': {'read_only': True},
         }
+
+
+
+class ProductListSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source='category.name', read_only=True)
+    primary_image_url = serializers.SerializerMethodField()
+    stock_status = serializers.SerializerMethodField()
+    stock = serializers.IntegerField(read_only=True)
+
+    def get_stock_status(self, obj):
+        inventory = getattr(obj, 'inventory', None)
+        return inventory.stock_status if inventory else 'unknown'
+
+    class Meta:
+        model = Product
+        fields = [
+            'id', 'name', 'category', 'category_name', 'price', 'stock', 'discount_price', 'display_price', 'rating', 'primary_image_url', 'stock_status', 'is_active'
+        ]
+
+    def get_primary_image_url(self, obj):
+        request = self.context.get('request')
+        primary = obj.primary_image
+
+        if primary and primary.image:
+            if request:
+                return request.build_absolute_uri(primary.image.url)
+            return primary.image.url
+        return None
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        if self.context.get('include_all_images', False):
+            ret['all_image_urls'] = self.get_all_image_urls(instance) # pyright: ignore[reportAttributeAccessIssue]
+        return ret
+
+class ProductDetailSerializer(ProductListSerializer):
+    profit_margin = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = ProductListSerializer.Meta.fields + ['description', 'cost', 'profit_margin', 'review_count', 'created_at', 'updated_at']
+
+    def get_profit_margin(self, obj):
+        if obj.price and obj.cost and obj.cost > 0:
+            actual_price = obj.discount_price if obj.discount_price else obj.price
+            margin = ((actual_price - obj.cost)/obj.price)*100
+            return round(margin,2)
+        return None
+
+class ProductFullSerializer(ProductDetailSerializer):
+    images = ProductImageSerializer(many=True, read_only=True)
+    variants = ProductVariationSerializer(many=True)
+    variations = serializers.SerializerMethodField()
+    inventory = serializers.SerializerMethodField()
+    initial_stock = serializers.IntegerField(source='inventory.initial_stock', read_only=True)
+    current_stock = serializers.IntegerField(source='inventory.current_stock', read_only=True)
+
+    class Meta:
+        model = Product
+        fields = ProductDetailSerializer.Meta.fields + ['images', 'variants', 'variations', 'inventory', 'initial_stock', 'current_stock']
+
+    def get_variations(self, obj):
+        variations = {}
+        for variation in obj.vatiation_types.all():
+            variations[variation.name] = variation.values
+        if not variations:
+            for variant in obj.variants.all():
+                for key, value in variant.attributes.items():
+                    if key not in variations:
+                        variations[key] = []
+                    if value not in variations[key]:
+                        variations[key].append(value)
+        return variations
+
+    def get_inventory(self, obj):
+        inventory = getattr(obj, 'inventory', None)
+        if inventory:
+            return InventorySerializer(inventory).data
+        return None
+
+
+
+
+class InventorySerializer(serializers.ModelSerializer):
+    sold_count = serializers.IntegerField(read_only=True)
+    sold_percentage = serializers.FloatField(read_only=True)
+    stock_status = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = InventoryRecord
+        fields = [
+            'id', 'initial_stock', 'current_stock', 'low_stock_threshold', 'reorder_point', 'reorder_quantity', 'last_updated', 'sold_count', 'sold_percentage', 'stock_status'
+        ]
+        read_only_fields = [
+            'id', 'last_updated', 'current_stock'
+        ]
               
