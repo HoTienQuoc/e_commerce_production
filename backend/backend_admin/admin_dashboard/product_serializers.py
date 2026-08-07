@@ -64,6 +64,60 @@ class ProductListSerializer(serializers.ModelSerializer):
             ret['all_image_urls'] = self.get_all_image_urls(instance) # pyright: ignore[reportAttributeAccessIssue]
         return ret
 
-    
-    
-    
+
+class ProductVariantSerializers(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProductVariant
+        fields = [
+            'id', 'product', 'attributes', 'sku', 'price', 'discount_price', 'stock', 'image', 'image_url', 'created_at', 'updated_at'
+        ]
+        extra_kwargs = {
+            'product': {'required':False},
+            'created_at': {'read_only': True},
+            'updated_at': {'read_only': True},
+            'image': {'required':False, 'write_only':True}
+        }
+
+    def get_image_url(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.urls)
+            return obj.image.url
+        return None
+
+    def save(self, **kwargs):
+        instance = super().save(**kwargs)
+        # clear related product cache upon variant save
+        return instance
+
+    def validate(self, data):
+        if 'price' in data and data['price'] is not None:
+            product = data.get('product') or self.instance.product if self.instance else None
+
+            if product and data['price'] > product.price and not getattr(product, 'allow_price_increase', False):
+                raise serializers.ValidationError({"price": "Variant price cannot exceed base product price unless explicitly allowed"}) 
+
+            if 'discount_price' in data and data['discount_price'] is not None:
+                price = data.get('price')
+                if price and data['discount_price'] >= price:
+                    raise serializers.ValidationError({"discount_price":"Discount price must be lower than regular price"})
+
+            request = self.context.get('request')
+            if request and request.data.get('is_stock_distribution'):
+                return data
+            return data
+
+class ProductVariationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductVariation
+        fields = [
+            'id', 'name', 'values', 'created_at', 'updated_at'
+        ]
+        extra_kwargs = {
+            'created_at': {'read_only': True},
+            'updated_at': {'read_only': True},
+        }
+              
