@@ -183,4 +183,58 @@ class InventorySerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id', 'last_updated', 'current_stock'
         ]
-              
+
+
+class ProductCreateSerializer(serializers.ModelSerializer):
+    images = ProductImageSerializer(many=True, required=False)
+    variations = ProductVariationSerializer(many=True, required=True, source='variations_type')
+    variants = ProductVariantSerializers(many=True, required=False)
+    initial_stock = serializers.IntegerField(write_only=True, required=False, default=0)
+    low_stock_threshold = serializers.IntegerField(required=False, allow_null=True)
+    reorder_point = serializers.IntegerField(required=False, allow_null=True)
+    reorder_quantity = serializers.IntegerField(required=False, allow_null=True)
+
+    class Meta:
+        model = Product
+        fields = [
+            'id', 'name', 'description', 'category', 'price', 'discount_price', 'cost', 'is_active', 'images', 'variations', 'variants',
+            'initial_stock', 'low_stock_threshold', 'reorder_point', 'reorder_quantity'
+        ]
+
+    def valiate(self, data):
+        discount_price = data.get('discount_price')
+        price = data.get('price')
+        cost = data.get('cost')
+
+        if discount_price and price and discount_price >= price:
+            raise serializers.ValidationError({"discount_price": "Must be less than regular price"})
+
+        if price and cost and price < cost:
+            raise serializers.ValidationError({"price": "Selling price cannot be less than cost price"})
+
+        return data
+
+    def validate_cost(self, value):
+        if value is not None and value < 0:
+            raise serializers.ValidationError("cost cannot be negative")
+        return value
+
+    def create(self, validated_data):
+        # Extract nested data
+        images_data = validated_data.pop('images', [])
+        variations_data = validated_data.pop('variation_types', [])
+        variants_data = validated_data.pop('variants', [])
+        # store initial_stock in a variable
+        initial_stock = validated_data.pop('initial_stock', 0)
+        # Extract other inventory data
+        inventory_data = {
+            'low_stock_threshold': validated_data.pop('low_stock_threshold', None),
+            'reorder_point': validated_data.pop('reorder_point', None),
+            'reorder_quantity': validated_data.pop('reorder_quantity', None)
+        }
+
+        # Create the product in a transaction
+        from django.db import transaction
+        with transaction.atomic():
+            # Create the product
+            product = Product.objects.create(**validated_data)
