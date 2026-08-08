@@ -238,3 +238,10 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         with transaction.atomic():
             # Create the product
             product = Product.objects.create(**validated_data)
+
+            # Create inventory record with the explicit initial_stock value
+            from inventory.services import InventoryService
+            inventory_service = InventoryService()
+
+            inventory, _ = inventory_service.initialize_inventory(product=product, initial_stock=initial_stock, update_if_exists=True)
+
