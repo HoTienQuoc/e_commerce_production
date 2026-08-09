@@ -303,7 +303,57 @@ class ProductUpdateSerializer(ProductCreateSerializer):
                 inventory_data[field] = validated_data.pop(field)
 
         initial_stock = validated_data.pop('initial_stock', None) if 'initial_stock' in validated_data else None
-        
+
+        from django.db import transaction
+        with transaction.atomic():
+            # Update product fields
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+
+            instance.save()
+
+            if removed_image_ids:
+                ProductImage.objects.filter(id__in = removed_image_ids, product = instance).delete()
+
+            inventory = getattr(instance, 'inventory', None)
+            if inventory and inventory_data:
+                update_fields = []
+                for field, value in inventory_data.items():
+                    setattr(inventory, field, value)
+                    update_fields.append(field)
+
+                if update_fields:
+                    inventory.save(update_fields=update_fields)
+
+            elif not inventory and initial_stock is not None:
+                from inventory.services import InventoryService
+                inventory_service = InventoryService()
+                inventory, _ = inventory_service.initialize_inventory(product=instance, initial_stock=initial_stock)
+
+            # Handle variations if provided
+            if variants_data is not None:
+
+
+    def _handle_variations(self, instance, variations_data):
+        """Handle variation type updates"""
+        existing_variations = {str(var.id):var for var in instance.variation_types.all()}
+
+        for variation_data in variations_data:
+            variation_id = str(variation_data.get('id')) if variation_data.get('id') else None
+
+            if variation_id and variation_id in existing_variations:
+                # Update existing variation
+                variation = existing_variations[variation_id]
+                for key, value in variation_data.items():
+                    if key not in ['id', 'product']:
+                        setattr(variation, key, value)
+                variation.save()
+                del existing_variations[variation_id]
+
+            else:
+                # Create new variation
+                ProductVariation.objects.create(product = instance, **{k:v for k, v in variation_data.items() if k!='id'})    
+
 
 
 
