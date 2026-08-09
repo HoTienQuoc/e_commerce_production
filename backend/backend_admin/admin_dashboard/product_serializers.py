@@ -245,3 +245,66 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
             inventory, _ = inventory_service.initialize_inventory(product=product, initial_stock=initial_stock, update_if_exists=True)
 
+            if inventory:
+                update_fields = []
+                for field in ['low_stock_threshold', 'reorder_point', 'reorder_quantity']:
+                    if inventory_data[field] is not None:
+                        setattr(inventory, field, inventory_data[field])
+                        update_fields.append(field)
+
+                if update_fields:
+                    inventory.save(update_fields=update_fields)
+
+            # create image
+            for image_data in images_data:
+                image_serializer = ProductImageSerializer(data={**image_data, 'product': product.id})
+
+                if image_serializer.is_valid():
+                    image_serializer.save()
+
+            # Create variations
+            for variation_data in variations_data:
+                ProductVariation.objects.create(product=product, **variation_data)
+
+            # Create variants
+            for variant_data in variants_data:
+                ProductVariant.objects.create(product=product, **variant_data)
+
+        return product
+
+class ProductUpdateSerializer(ProductCreateSerializer):
+    class Meta(ProductCreateSerializer.Meta):
+        pass
+
+    def validate(self, data):
+        # Call parent validate method
+        data = super().validate(data)
+
+        if self.instance:
+            if 'initial_stock' in data:
+                data.pop('initial_stock')
+        return data
+
+    def update(self, instance, validated_data):
+        # Extract nested data
+        images_data = validated_data.pop('images', None)
+        variations_data = validated_data.pop('variation_types', None)
+        variants_data = None
+
+        if 'variants' in self.initial_data: # pyright: ignore[reportOperatorIssue]
+            variants_data = validated_data.pop('variants', None)
+
+        removed_image_ids = self.initial_data.get('removed_image_ids', []) # pyright: ignore[reportAttributeAccessIssue]
+
+        # Extract inventory data
+        inventory_data = {}
+        for field in ['low_stock_threshold', 'reorder_point', 'reorder_quantity']:
+            if field in validated_data:
+                inventory_data[field] = validated_data.pop(field)
+
+        initial_stock = validated_data.pop('initial_stock', None) if 'initial_stock' in validated_data else None
+        
+
+
+
+
