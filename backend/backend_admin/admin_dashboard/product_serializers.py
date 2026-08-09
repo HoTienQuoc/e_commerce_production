@@ -332,6 +332,50 @@ class ProductUpdateSerializer(ProductCreateSerializer):
 
             # Handle variations if provided
             if variants_data is not None:
+                self._handle_variations(instance, variations_data)
+
+            # Handle variants if provided
+            if variants_data is not None:
+                # Validate variants before proccessing
+                validated_variants = self.validate_variants(variants_data)
+                self._handle_variants(instance, validated_variants)
+                # Only update inventory from variants if explicit stock values were provided in variants
+                if any('stock' in variant for variant in validated_variants):
+
+    
+    def _update_inventory_with_variants(self, instance, variants_data):
+        """Update inventory record based on variant stocks, only if stock values are present"""
+        if not variants_data or not any('stock' in variant for variant in variants_data):
+            return 
+
+        # Calculate total stock from variants
+        total_stock = sum(variant.get('stock', 0) for variant in variants_data if 'stock' in variant)
+
+        
+
+    def _handle_variants(self, instance, variants_data):
+        """Handle variant updates""" 
+        existing_variants = {str(var.id): var for var in instance.variants.all()}
+
+        for variant_data in variants_data:
+            variant_id = str(variant_data.get('id')) if variant_data.get('id') else None
+
+            if variant_id and variant_id in existing_variants:
+                # Update existing variant 
+                variant = existing_variants[variant_id]
+                for key, value in variant_data.items():
+                    if key not in ['id', 'product']:
+                        setattr(variant, key, value)
+
+                variant.save()
+
+                del existing_variants[variant_id]
+
+            else:
+                # Create new variant
+                variant_data_copy = {k:v for k, v in variant_data.items() if k not in ['id', 'product']}
+
+                ProductVariant.objects.create(product=instance, **variant_data_copy)     
 
 
     def _handle_variations(self, instance, variations_data):
