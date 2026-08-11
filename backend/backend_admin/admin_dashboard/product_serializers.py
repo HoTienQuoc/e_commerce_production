@@ -341,7 +341,34 @@ class ProductUpdateSerializer(ProductCreateSerializer):
                 self._handle_variants(instance, validated_variants)
                 # Only update inventory from variants if explicit stock values were provided in variants
                 if any('stock' in variant for variant in validated_variants):
+                    self._update_inventory_with_variants(instance, validated_variants)
+        return instance
 
+
+    def validate_variants(self, variants_data):
+        """Validate variants data"""
+        if not variants_data:
+            return variants_data
+
+        # Check for duplicate attributes
+        attribute_sets = []
+
+        for variant in variants_data:
+            if 'attributes' not in variant:
+                continue
+            attributes = variant['attributes']
+            attr_set = frozenset(attributes.items())
+
+            if attr_set in attribute_sets:
+                raise serializers.ValidationError("Duplicate variant attributes found")
+
+            attribute_sets.append(attr_set)
+        
+        return variants_data
+            
+            
+
+        
     
     def _update_inventory_with_variants(self, instance, variants_data):
         """Update inventory record based on variant stocks, only if stock values are present"""
@@ -351,7 +378,13 @@ class ProductUpdateSerializer(ProductCreateSerializer):
         # Calculate total stock from variants
         total_stock = sum(variant.get('stock', 0) for variant in variants_data if 'stock' in variant)
 
-        
+        # Use the service method to update inventory
+        from inventory.services import InventoryService
+        inventory_service = InventoryService()
+        inventory_service.update_inventory_from_variants(instance, total_stock)
+
+        # Clear product cache immediately after variant stock update
+
 
 
     def _handle_variants(self, instance, variants_data):
@@ -400,6 +433,11 @@ class ProductUpdateSerializer(ProductCreateSerializer):
                 ProductVariation.objects.create(product = instance, **{k:v for k, v in variation_data.items() if k!='id'})    
 
 
+    def to_representation(self, instance):
+        """Override to_presentation to include full nested data in the response after create(update operations)"""
 
+        # use the full serializer for the response
+        serializer = ProductFullSerializer(instance, context = self.context)
+        return serializer.data
 
 
