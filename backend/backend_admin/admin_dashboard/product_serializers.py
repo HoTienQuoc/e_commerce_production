@@ -353,6 +353,7 @@ class ProductUpdateSerializer(ProductCreateSerializer):
 
         
 
+
     def _handle_variants(self, instance, variants_data):
         """Handle variant updates""" 
         existing_variants = {str(var.id): var for var in instance.variants.all()}

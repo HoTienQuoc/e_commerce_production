@@ -40,4 +40,55 @@ class InventoryService:
 
         return inventory, created
 
-                
+    def update_inventory_from_variants(self, product, total_stock, is_sync = False, adjustment_type=None, notes = None):
+        """Update inventory record based on variant stocks"""
+        inventory = getattr(product, 'inventory', None)
+        # if no inventory exists, create one
+        if not inventory:
+            return self.initialize_inventory(product, total_stock)
+
+        # skip if no change in stock
+        if inventory.current_stock == total_stock:
+            return inventory
+
+        # Determine the adjustment type if not provided
+        if adjustment_type is None:
+            adjustment_type = 'sync' if is_sync else 'inventory'
+
+        # Create approriate message based on adjustment type
+        if notes is None:
+            if adjustment_type == 'redistribution':
+                notes = 'Stock redistribution across variants'
+            elif adjustment_type == 'sync':
+                notes = 'Synchronized stock with variants'
+            else:
+                notes = 'Stock updated from variants'
+
+        # Create an inventory log entry
+        from .models import InventoryLog, StockAdjustment
+
+        # Log the inventory change 
+        InventoryLog.objects.create(
+            product = product,
+            previous_stock = inventory.current_stock,
+            current_stock = total_stock,
+            adjustment_type = adjustment_type,
+            notes = notes
+        )
+
+        # Create a stock adjustment record
+        StockAdjustment.objects.create(
+            inventory = inventory,
+            quantity = total_stock - inventory.current_stock,
+            adjustment_type = adjustment_type,
+            reason = notes,
+            previous_stock = inventory.current_stock,
+            new_stock = total_stock,
+            reference = f'{adjustment_type.capitalize()}: {product.id}'
+        )
+
+        # Update the inventory record
+        inventory.current_stock = total_stock
+        inventory.save(update_fields = ['current_stock'])
+
+        return inventory
