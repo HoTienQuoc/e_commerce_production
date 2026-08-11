@@ -441,3 +441,36 @@ class ProductUpdateSerializer(ProductCreateSerializer):
         return serializer.data
 
 
+class AdminCategoryListSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'slug', 'image_url']
+
+    def get_image_url(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+
+
+class AdminCategorySerializer(serializers.ModelSerializer):
+    children = serializers.SerializerMethodField()
+    parent_name = serializers.SerializerMethodField()
+    image_url = serializers.SerializerMethodField()
+    delete_image = serializers.BooleanField(required=False, write_only=True)
+
+    class Meta:
+        model = Category
+        fields = [
+            'id', 'name', 'slug', 'description', 'image', 'image_url', 'parent', 'parent_name', 'children', 'is_active', 'created_at', 'updated_at', 'delete_image'
+        ]
+        read_only_fields = ['id', 'slug', 'created_at', 'updated_at', 'image_url']
+        extra_kwargs = {
+            'image': {'write_only':True, 'required': False},
+            'parent': {'required':False, 'allow_null': True}
+        }
+
