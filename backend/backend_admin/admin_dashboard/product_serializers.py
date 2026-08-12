@@ -474,3 +474,72 @@ class AdminCategorySerializer(serializers.ModelSerializer):
             'parent': {'required':False, 'allow_null': True}
         }
 
+
+    def get_children(self, obj):
+        children = Category.objects.filter(parent = obj)
+        serializer = AdminCategoryListSerializer(children, many=True, context=self.context)
+        return serializer.data
+
+    def get_parent_name(self, obj):
+        if obj.parent:
+            return obj.parent.name
+        return None
+    
+    def get_image_url(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+
+    def create(self, validated_data):
+        validated_data.pop('delete_image', None)
+
+        # Remove slug from name if not provided
+        if 'slug' not in validated_data:
+            validated_data['slug'] = slugify(validated_data['name'])
+
+        return super().create(validated_data)
+
+    def update(self, validated_data, instance):
+        validated_data.pop('delete_image', None)
+        return super().update(instance, validated_data)
+
+    def validate_name(self, value):
+        """Ensure unique category names, allowing for name reuse with different parents"""
+        # Get the parent from the data
+        parent_data = self.initial_data.get('parent', None) # pyright: ignore[reportAttributeAccessIssue]
+
+        parent = None
+
+        if parent_data in ['', 'null', None, 'undefined']:
+            parent = None
+        else:
+            parent = parent_data
+
+        query = Category.objects.filter(name__iexact = value)
+
+        if parent:
+            query = query.filter(parent=parent)
+        else:
+            query = query.filter(parent__isnull = True)
+
+        instance = getattr(self, 'instance', None)
+
+        if instance and instance.pk:
+            query = query.exclude(pk=instance.pk)
+
+        if query.exists():
+            raise serializers.ValidationError("A Category with this name already exists in this location")
+        
+        return value
+
+
+    def to_representation(self, instance):
+        """Ensure context is properly passed to serializer and add request to context"""
+        result = super().to_representation(instance)
+        return result
+
+
+
