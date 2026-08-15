@@ -43,4 +43,50 @@ class CacheUtil:
         key = f"{self.prefix}query_{param_hash}"
 
         # Register this key
-        
+        self.register_key(key)
+        return key
+
+    def register_key(self, key):
+        """Register a key with Redis SET for efficient tracking"""
+        # Try Redis-specific SET operation for better performance
+        if hasattr(cache, '_cache') and hasattr(cache._cache, 'get_client'): # pyright: ignore[reportAttributeAccessIssue]
+            try:
+                redis_client = cache._cache.get_client() # pyright: ignore[reportAttributeAccessIssue]
+                registry_set_key = f"{self.prefix}key_set"
+                redis_client.sadd(registry_set_key, key)
+                redis_client.expire(registry_set_key, 86400*7)
+                return 
+            except Exception:
+                pass
+
+        # Fallback to existing list-based registry
+        registry_key = f"{self.prefix}key_registry"
+        registered_keys = cache.get(registry_key) or []
+
+        if len(registered_keys) > 1000:
+            registered_keys = registered_keys[-900]
+        if key not in registered_keys:
+            registered_keys.append(key)
+            cache.set(registry_key, registered_keys, timeout=86400*7)
+
+    def get_item_cache_key(self, item_id):
+        """Generate a cache key for a specific item"""
+        return f"{self.prefix}detail_{item_id}"
+
+    def get_list_cache_key(self):
+        """Get the cache key for the full list"""
+        return f"{self.prefix}list"
+
+    def get_from_cache(self, cache_key):
+        """Get data from cache using the key"""
+        data = cache.get(cache_key)
+        hit_or_miss = "hit" if data is not None else "miss"
+        logger.debug(f"Cache {hit_or_miss} for key: {cache_key}")
+        return data
+
+    def set_in_cache(self, cache_key, data, timeout=300):
+        """Store data in cache with the given key"""
+        cache.set(cache_key, data, timeout=timeout)
+
+
+
