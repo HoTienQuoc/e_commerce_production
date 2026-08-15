@@ -28,3 +28,6 @@ class AdminProductViewSet(viewsets.ModelViewSet):
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
+
+    def get_queryset(self):
+        return self.product_service.get_filtered_products(self.request.query_params)
