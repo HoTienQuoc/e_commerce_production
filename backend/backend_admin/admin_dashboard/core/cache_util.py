@@ -88,5 +88,70 @@ class CacheUtil:
         """Store data in cache with the given key"""
         cache.set(cache_key, data, timeout=timeout)
 
+    def clear_item_cache(self, item_id=None):
+        """Clear cache for a specific item"""
+        if item_id:
+            key = self.get_item_cache_key(item_id)
+            cache.delete(key)
+
+            # Also clear list cache as item updates affect lists
+            list_key = self.get_list_cache_key()
+            cache.delete(list_key)
+
+            # clear the all item cache
+            all_key = f"{self.prefix}all"
+            cache.delete(all_key)
+
+
+    def clear_cache(self):
+        """Clear all caches related to this model with Redis pattern matching"""
+        # Try Redis-specific pattern deletion first
+        if hasattr(cache, '_cache') and hasattr(cache._cache, 'get_client'): # pyright: ignore[reportAttributeAccessIssue]
+            try:
+                redis_client = cache._cache.get_client() # pyright: ignore[reportAttributeAccessIssue]
+                pattern = f"*{self.prefix}"
+                cursor = 0
+                keys_to_delete = []
+                while True:
+                    cursor, keys = redis_client.scan(cursor=cursor, match=pattern, count=100)
+                    keys_to_delete.extend(keys)
+                    if cursor == 0:
+                        break
+
+                if keys_to_delete:
+                    batch_size=100
+                    for i in range(0, len(keys_to_delete), batch_size):
+                        batch = keys_to_delete[i:i+batch_size]
+                        if batch:
+                            redis_client.delete(*batch)
+
+                        logger.info(f"Cleared {len(keys_to_delete)} cache keys for {self.model_name} using Redis pattern")
+                        return 
+                    
+            except Exception as redis_error:
+                logger.warning(f"Redis pattern deletion failed: {redis_error}, falling back to registry method")
+
+        # Fallback to registry-based deletion
+        registry_key = f"{self.prefix}key_registry"
+        registered_keys = cache.get(registry_key) or []
+
+        keys_to_delete = [self.get_list_cache_key(), f"{self.prefix}all"]
+        keys_to_delete.extend(registered_keys)
+
+        # Delete all keys
+        logger.info(f"Clearing {len(keys_to_delete)} cache keys for {self.model_name}")
+        cache.delete_many(keys_to_delete)
+
+        # Clear the registry itself
+        cache.delete(registry_key)
+
+        # Clear stats cache
+        stats_key = f"{self.model_name}_stats"
+        cache.delete(stats_key)
+
+
+
+
+
 
 
