@@ -38,6 +38,51 @@ class ProductCacheService(BaseService):
         self.cache_util.clear_item_cache(product_id)
         self._clear_product_variant_caches(product_id)
 
+        product_detail_key = f"product_{product_id}_detail"
+        cache.delete(product_detail_key)
+
+    def clear_product_cache(self, product_id=None):
+        """Cache clearing with Redis"""
+        logger.debug(f"Clearing product cache for product_id = {product_id}")
+        if product_id:
+            self.clear_single_product_cache(product_id)
+
+        # clear general product caches
+        self.clear_general_product_cache()
+
+        # Clear related model caches that might be affected
+        self._clear_related_model_caches()
+
+        # Update cache invalidation timestamp
+        cache.set('Product_cache_last_cleared', time.time(), timeout=86400)
+
+    def _clear_related_model_caches(self):
+        """Clear caches of related models that might be affected"""
+        # Clear category cache as products affect category listings
+        category_cache = CacheUtil(model_name='category')
+        category_cache.clear_cache()
+
+        # Clear inventory-related caches
+        inventory_cache = CacheUtil(model_name='inventory')
+        inventory_cache.clear_cache()
+
+    def clear_general_product_cache(self):
+        """Clear general product listing caches"""
+        self.cache_util.clear_cache()        
+        common_patterns = [
+            {'loadBasiInfo': 'true'},
+            {'status':'active'},
+            {'status':'inactive'},
+            {},
+        ]
+        for pattern in common_patterns:
+            cache_key = self.cache_util.get_cache_key(pattern)
+            cache.delete(cache_key)
+
+        category_cache = CacheUtil(model_name='category')
+        category_cache.clear_cache()
+
+
     def _clear_product_variant_caches(self, product_id):
         """Clear all variant-related caches for a product"""
         if hasattr(cache, '_cache') and hasattr(cache._cache, 'get_client'): # pyright: ignore[reportAttributeAccessIssue]
