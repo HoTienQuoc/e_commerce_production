@@ -70,7 +70,7 @@ class ProductCacheService(BaseService):
         """Clear general product listing caches"""
         self.cache_util.clear_cache()        
         common_patterns = [
-            {'loadBasiInfo': 'true'},
+            {'loadBasicInfo': 'true'},
             {'status':'active'},
             {'status':'inactive'},
             {},
