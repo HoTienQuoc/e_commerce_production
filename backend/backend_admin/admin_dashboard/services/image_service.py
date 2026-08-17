@@ -147,3 +147,67 @@ class ImageService:
                 'error': 'Image not found'
             }, status=status.HTTP_404_NOT_FOUND)
 
+    def delete_product_image(self, product_id, image_id):
+        """Delete a product image with improved primary image handling"""
+        try:
+            product = Product.objects.get(id=product_id)
+            image = ProductImage.objects.get(id=image_id, product=product)
+
+            was_primary = image.is_primary
+            image.delete()
+
+            # if deleted image was primary, update product's primary image
+            if was_primary:
+                next_image = ProductImage.objects.filter(product=product).first()
+
+                if next_image:
+                    next_image.is_primary=True
+                    next_image.save(update_fields=['is_primary'])
+
+            return Response({'message': 'Image deleted successfully'})
+
+        except Product.DoesNotExist:
+            return Response({
+                'error': 'Product not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        except ProductImage.DoesNotExist:
+            return Response({
+                'error': 'Image not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+    def reorder_images(self, product_id, order_data):
+        """Reorder product images"""
+        try:
+            product = Product.objects.get(id=product_id)
+
+            if not isinstance(order_data, list):
+                return Response({
+                    'error': 'Expected array of image order data'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            for item in order_data:
+                if 'id' not in item or 'order' not in item:
+                    continue
+
+                try:
+                    image = ProductImage.objects.get(id=item['id'], product=product)
+                    image.order = item['order']
+                    image.save(update_fields=['order'])
+                except ProductImage.DoesNotExist:
+                    pass
+
+            # Return updated image list
+            images = ProductImage.objects.filter(product=product).order_by('order')
+
+            return Response({
+                'message': 'Images reordered successfully',
+                'images': ProductImageSerializer(images, many=True).data
+            }) 
+        
+        except Product.DoesNotExist:
+            return Response({
+                'error': 'Product not found'
+            }, status=status.HTTP_404_NOT_FOUND) 
+
+
