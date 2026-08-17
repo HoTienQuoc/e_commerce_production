@@ -79,3 +79,71 @@ class ImageService:
             created_images[0].save(update_fields = ['is_primary'])
 
         return created_images
+
+    def manage_product_images(self, product_id, request):
+        """Add or update product images with file upload support"""
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response(
+                {'error': 'Product not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Get images from various sources
+        image_data_list = self.extract_files_from_request(request)
+
+        if not image_data_list:
+            return Response(
+                {'error': 'No valid image files provided. Ensure images uploaded correctly.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            created_images = self.process_images(product, image_data_list)
+
+            # Get request for proper URL generation in serializer
+            context = {'request': request} if request else {}
+
+            return Response({
+                'message': f'Successfully added {len(created_images)} images',
+                'images': ProductImageSerializer(created_images, many=True, context=context)
+            })
+
+        except Exception as e:
+            import traceback
+            print(f"Error in manage_product_manages: {str(e)}")
+            print(traceback.format_exc())
+            return Response({
+                'error': 'Failed to process images',
+                'detail': str(e) 
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    def set_primary_image(self, product_id, image_id):
+        """Set a specific image as the primary image"""
+        try:
+            product = Product.objects.get(id=product_id)
+            image = ProductImage.objects.get(id=image_id, product=product)
+
+            # Clear existing primary flags
+            ProductImage.objects.filter(product=product, is_primary=True).update(is_primary=False)
+
+            # Set this images as primary
+            image.is_primary = True
+            image.save(update_fields=['is_primary'])
+
+            return Response({
+                'message': 'Primary image updated successfully',
+                'image': ProductImageSerializer(image).data
+            })
+
+        except Product.DoesNotExist:
+            return Response({
+                'error': 'Product not found',
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        except ProductImage.DoesNotExist:
+            return Response({
+                'error': 'Image not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
