@@ -34,7 +34,7 @@ class ProductFilterService(BaseService):
         queryset = self._apply_category_filter(queryset, query_params)
         queryset = self._apply_stock_status_filter(queryset, query_params)
         queryset = self._apply_price_filter(queryset, query_params)
-        queryset = self._apply_storing(queryset, query_params)
+        queryset = self._apply_sorting(queryset, query_params)
 
         logger.debug(f"Final result count: {queryset.count()}")
         return queryset
