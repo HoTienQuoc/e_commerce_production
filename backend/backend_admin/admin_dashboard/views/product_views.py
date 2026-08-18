@@ -98,7 +98,49 @@ class AdminProductViewSet(viewsets.ModelViewSet):
                 'details': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
 
+        try:
+            # First clear all product caches immediately
+            self.product_service.clear_product_cache(instance.id)
+            data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+
+            if 'stock' in data and not data.get('initial_stock'):
+                data['initial_stock'] = data['stock']
+
+            # Update product
+            serializer = self.get_serializer(instance, data=data, partial=partial)
+
+            serializer.is_valid(raise_exception = True)
+            with transaction.atomic():
+                product = serializer.save()
+                image_files = self.image_service.extract_files_from_request(request)
+                if image_files:
+                    created_images = self.image_service.process_images(product, image_files)
+                    logger.info(f"Updated with {len(created_images)} images for product {product.id}")
+                else:
+                    logger.info('No image files found in update request')
+            self.product_service.clear_product_cache(product.id)
+            self._clear_related_caches(product.id)
+
+            return Response(ProductFullSerializer(product, context=self.get_serializer_context()).data)
+
+        except ValidationError as e:
+            return Response({
+                'error': 'Validation error',
+                'details': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            import traceback
+            logger.error(f"Error updating product: {str(e)}")
+            logger.error(traceback.format_exc())
+            return Response({
+                'error': 'Server error',
+                'detail': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def _clear_related_caches(self, product_id):
         """Clear all caches related to a product update"""
@@ -128,3 +170,5 @@ class AdminProductViewSet(viewsets.ModelViewSet):
                 ]
                 cache.delete_many(common_keys)
         cache.set('cache_invalidated_at', time.time(), timeout=3600)
+
+    
