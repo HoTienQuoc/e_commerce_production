@@ -171,4 +171,39 @@ class AdminProductViewSet(viewsets.ModelViewSet):
                 cache.delete_many(common_keys)
         cache.set('cache_invalidated_at', time.time(), timeout=3600)
 
+    def destroy(self, request, *args, **kwargs):
+        """Override destroy to clear cache before and after deletion"""
+        instance = self.get_object()
+        instance_id = instance.id
+        category_id = instance.category_id if instance.category else None
+
+        self.product_service.clear_product_cache(instance_id)
+
+        # Perform the deletion
+        response = super().destroy(request, *args, **kwargs)
+
+        self.product_service.clear_product_cache()
+
+        if category_id:
+            category_cache = CacheUtil(model_name='category')
+            category_cache.clear_item_cache(category_id)
+            category_cache.clear_cache()
+        return response
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def bulk_delete(self, request):
+        """Bulk delete products"""
+        self.product_service.request = request
+        response = self.product_service.bulk_delete_products()
+        self.product_service.clear_product_cache()
+        return response
+
+    @action(detail=True, methods=['post'])
+    def stock_adjustment(self, request, pk=None):
+        """Adjust product stock with reason"""
+        product = self.get_object()
+        self.product_service.request = request
+        return self.product_service.adjust_stock(product.id)
+
     

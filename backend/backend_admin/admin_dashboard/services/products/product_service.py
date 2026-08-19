@@ -39,7 +39,36 @@ class ProductService(BaseService):
         """Clear product cache using cache service"""
         self.cache_service.clear_product_cache(product_id)
 
-    
+    def bulk_delete_products(self):
+        """Bulk delete products"""
+        product_ids = self.request.data.get('product_ids', []) # pyright: ignore[reportOptionalMemberAccess]
+        if not product_ids:
+            return self.error_response(error='No product IDs provided')
+        try:
+            with transaction.atomic():
+                # Clear individual caches first
+                for product_id in product_ids:
+                    self.cache_service.clear_single_product_cache(product_id)
+
+                # First delete associated inventory records to avoid foreign key issues
+
+                InventoryRecord.objects.filter(product__id__in=product_ids).delete()
+                delete_count = Product.objects.filter(id__in=product_ids).delete()[0]
+
+                # Clear all product and category caches to ensure consistency
+                self.cache_service.clear_general_product_cache()
+
+                return self.success_response({
+                    'message': f"Successfully deleted {delete_count} products",
+                    'delete_count': delete_count
+                })
+        except Exception as e:
+            self.log_exception(e, 'Failed to delete products')
+            return self.error_response(
+                error="Failed to delete products", 
+                details=str(e)
+            )
+
 
     
     
