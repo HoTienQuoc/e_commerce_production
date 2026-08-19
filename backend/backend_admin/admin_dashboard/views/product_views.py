@@ -207,3 +207,5 @@ class AdminProductViewSet(viewsets.ModelViewSet):
         return self.product_service.adjust_stock(product.id)
 
     
+
+    

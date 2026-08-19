@@ -92,3 +92,6 @@ class InventoryService:
         inventory.save(update_fields = ['current_stock'])
 
         return inventory
+
+
+    

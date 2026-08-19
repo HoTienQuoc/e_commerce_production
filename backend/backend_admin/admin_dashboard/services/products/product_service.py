@@ -69,6 +69,56 @@ class ProductService(BaseService):
                 details=str(e)
             )
 
+    def adjust_stock(self, product_id):
+        """Adjust stock for a product"""
+        try:
+            product = self.get_object(product_id)
+            inventory = getattr(product, 'inventory', None)
+
+            if not inventory:
+                # Create inventory record if it doesn't exist
+                inventory = self._initialize_inventory(product)
+                return self.success_response({
+                    'message': 'Inventory record created successfully',
+                    'inventory_id': str(inventory.id),
+                    'current_stock': inventory.current_stock,
+                    'initial_stock': inventory.initial_stock,
+                })
+
+            # Adjusting existing inventory stock
+            result = self.inventory_service.adjust_stock(inventory.id, self.request.data, self.user)
+
+
+    def _initialize_inventory(self, product):
+        """Initialize inventory for a product"""
+        initial_stock = self.request.data.get('initial_stock', 0) # pyright: ignore[reportOptionalMemberAccess]
+        quantity = self.request.data.get('quantity', 0) # pyright: ignore[reportOptionalMemberAccess]
+        try:
+            quantity = int(quantity)
+            initial_stock = int(initial_stock)
+        except ValueError:
+            raise ValidationError('Invalid quantity or initial stock value')
+
+        # Create inventory record using service
+        inventory, _ = self.inventory_service.initialize_inventory(product, initial_stock=initial_stock or quantity)
+
+        return inventory
+
+
+
+    def get_object(self, product_id=None):
+        """Get product instance by ID"""
+        if not product_id and hasattr(self, 'current_product_id'):
+            product_id = self.current_product_id
+
+        if not product_id:
+            raise ValidationError("Product ID is required")
+
+        try:
+            return Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            raise ValidationError(f"Product with ID {product_id} not found")
+
 
     
     
