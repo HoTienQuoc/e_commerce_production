@@ -32,7 +32,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
     def validate(self, data):
         return data
 
-class ProductVariantSerializers(serializers.ModelSerializer):
+class ProductVariantSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
 
     class Meta:

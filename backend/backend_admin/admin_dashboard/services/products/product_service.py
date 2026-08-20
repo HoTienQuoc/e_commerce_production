@@ -5,7 +5,7 @@ from rest_framework.exceptions import ValidationError
 from ecommerce.models import Product
 from inventory.models import InventoryRecord
 from inventory.services import InventoryService
-from admin_dashboard.product_serializers import (ProductFullSerializer, ProductUpdateSerializer, ProductVariantSerializers)
+from admin_dashboard.product_serializers import (ProductFullSerializer, ProductUpdateSerializer, ProductVariantSerializer)
 from .base_service import BaseService
 from .product_cache_service import ProductCacheService
 from .product_filter_service import ProductFilterService

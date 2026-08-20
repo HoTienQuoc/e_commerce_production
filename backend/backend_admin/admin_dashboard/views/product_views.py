@@ -11,7 +11,7 @@ import logging
 
 from ecommerce.models import Product
 from inventory.services import InventoryService
-from admin_dashboard.product_serializers import (ProductCreateSerializer, ProductUpdateSerializer, ProductDetailSerializer, ProductFullSerializer, ProductListSerializer, ProductImageSerializer, ProductVariantSerializers)
+from admin_dashboard.product_serializers import (ProductCreateSerializer, ProductUpdateSerializer, ProductDetailSerializer, ProductFullSerializer, ProductListSerializer, ProductImageSerializer, ProductVariantSerializer)
 from admin_dashboard.services.products.product_service import ProductService
 from admin_dashboard.services.image_service import ImageService
 from admin_dashboard.core.cache_util import CacheUtil
