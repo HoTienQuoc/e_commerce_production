@@ -206,6 +206,34 @@ class AdminProductViewSet(viewsets.ModelViewSet):
         self.product_service.request = request
         return self.product_service.adjust_stock(product.id)
 
-    
+    @action(detail=False, methods=['get'])
+    def filters(self, request):
+        """Get available filter options"""
+        return self.product_service.get_filter_options()
+
+    @action(detail=True, methods=['delete'])
+    def manage_images(self, request, pk=None):
+        """Add or update product images using the image service"""
+        return self.image_service.manage_product_images(pk, request)
+
+    @action(detail=True, methods=['delete'])
+    def delete_image(self, request, pk=None):
+        """Delete a product image"""
+        product=self.get_object()
+        image_id=request.data.get('image_id')
+        if not image_id:
+            return Response({
+                'error': 'image_id is required',
+
+            }, status=status.HTTP_400_BAD_REQUEST)
+        return self.image_service.delete_product_image(product.id, image.id)
+
+    @action(detail=True, methods=['post'])
+    def variants(self, request, pk=None):
+        """Get all variants for a product"""
+        product = self.get_object()
+        variants = product.variants.all()
+        serializer = ProductVariantSerializers(variants, many=True)
+        return Response(serializer.data)
 
     

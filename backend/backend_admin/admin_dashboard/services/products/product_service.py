@@ -86,7 +86,21 @@ class ProductService(BaseService):
                 })
 
             # Adjusting existing inventory stock
-            result = self.inventory_service.adjust_stock(inventory.id, self.request.data, self.user)
+            result = self.inventory_service.adjust_stock(inventory.id, self.request.data, self.user) # pyright: ignore[reportOptionalMemberAccess]
+
+            if result.get('success', False):
+                # Clear cache 
+                self.cache_service.clear_single_product_cache(product.id)
+                return self.success_response(data=result)
+            return self.error_response(
+                error=result.get('error', 'Failed to adjust stock')
+            )
+        except Exception as e:
+            self.log_exception(e, f"Failed to adjust stock for product {product_id}")
+            return self.error_response(
+                error=str(e),
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
     def _initialize_inventory(self, product):
