@@ -119,6 +119,18 @@ class ProductService(BaseService):
         return inventory
 
 
+    def manage_product_variants(self, product, variant_data):
+        """Manage variants and variations for a product"""
+        try:
+            # Get the serializer context to pass down to the next service
+            serializer_context = self.get_serializer_context()
+
+            # Delegate to variant service, passing the context
+            result = self.variant_service.manage_variants(
+                product, variant_data, serializer_context = serializer_context
+            )
+
+
 
     def get_object(self, product_id=None):
         """Get product instance by ID"""
@@ -135,4 +147,8 @@ class ProductService(BaseService):
 
 
     
-    
+    def get_serializer_context(self):
+        """Return context for serializers"""
+        return {
+            'request': self.request,
+        }

@@ -236,4 +236,13 @@ class AdminProductViewSet(viewsets.ModelViewSet):
         serializer = ProductVariantSerializers(variants, many=True)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['post'])
+    def manage_variants(self, request, pk=None):
+        """Manage variants for a product"""
+        product = self.get_object()
+        self.product_service.request = request
+        return self.product_service.manage_product_variants(product, request.data)
+
+    
+
     
