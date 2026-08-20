@@ -1,3 +1,6 @@
+from django.db import transaction
+from .models import InventoryRecord, StockAdjustment
+
 class InventoryService:
     """Service for managing inventory operations"""
     def initialize_inventory(self, product, initial_stock=0, update_if_exists=False):
@@ -94,4 +97,92 @@ class InventoryService:
         return inventory
 
 
-    
+    def adjust_stock(self, inventory_id, data, user):
+        """Adjust inventory stock with a specific adjustment type('add', 'remove', 'set')"""
+
+        quantity_str = data.get('quantity')
+        adjustment_type = data.get('adjustment_type')
+        reason = data.get('reason', '')
+        reference = data.get('reference', '')
+
+        if not quantity_str or not adjustment_type:
+            return {'success': False, 'error': 'Quantity and adjustment_type are required'}
+
+        if adjustment_type not in ['add', 'remove', 'set']:
+            return {'success': False, 'error': 'adjustment_type must be "add", "remove", or "set"'}
+
+        try:
+            quantity = int(quantity_str)
+            if quantity <= 0:
+                return {'success': False, 'error': 'Quantity must be a positive integer'}
+
+        except (ValueError, TypeError):
+            return {'success': False, 'error': "Invalid quantity format"}
+
+        try:
+            with transaction.atomic():
+                # Lock the inventory record to prevent race conditions
+                inventory = InventoryRecord.objects.select_for_update().get(id=inventory_id)
+
+                previous_stock = inventory.current_stock
+                adjustment_amount = 0
+                new_stock = 0
+
+                if adjustment_type == 'add':
+                    adjustment_amount = quantity
+                    new_stock = previous_stock+quantity
+                elif adjustment_type == 'remove':
+                    adjustment_amount = -quantity
+                    new_stock = previous_stock - quantity
+                elif adjustment_type == 'set':
+                    adjustment_amount = quantity - previous_stock
+                    new_stock = quantity
+
+                if new_stock < 0:
+                    return {
+                        'success': False,
+                        'error': 'Adjustment would result in negative stock'
+                    }
+
+                if adjustment_amount != 0:
+                    adjustment = StockAdjustment.objects.create(
+                        inventory=inventory,
+                        quantity=adjustment_amount,
+                        previous_stock=previous_stock,
+                        new_stock=new_stock,
+                        adjustment_type=adjustment_type,
+                        reason=reason,
+                        reference=reference,
+                        admin=user
+                    )
+
+                    # Explicitly update the inventory record's stock
+                    inventory.current_stock = new_stock
+                    inventory.save(update_fields=['current_stock', 'last_updated'])
+
+                    return {
+                        'success': True,
+                        'message': 'Stock adjusted successfully',
+                        'old_stock': previous_stock,
+                        'adjustment': adjustment_amount,
+                        'new_stock': new_stock,
+                        'adjustment_id': adjustment.id
+                    }
+                else:
+                    return {
+                        'success': True,
+                        'message': 'No change in stock level',
+                        'old_stock': previous_stock,
+                        'new_stock': new_stock,
+                    }
+        except InventoryRecord.DoesNotExist:
+            return {
+                'success': False,
+                'error': 'Inventory record not found'
+            }
+
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f"An unexpected error occurred: {str(e)}"
+            }        
