@@ -188,7 +188,7 @@ class InventorySerializer(serializers.ModelSerializer):
 class ProductCreateSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, required=False)
     variations = ProductVariationSerializer(many=True, required=True, source='variations_type')
-    variants = ProductVariantSerializers(many=True, required=False)
+    variants = ProductVariantSerializer(many=True, required=False)
     initial_stock = serializers.IntegerField(write_only=True, required=False, default=0)
     low_stock_threshold = serializers.IntegerField(required=False, allow_null=True)
     reorder_point = serializers.IntegerField(required=False, allow_null=True)

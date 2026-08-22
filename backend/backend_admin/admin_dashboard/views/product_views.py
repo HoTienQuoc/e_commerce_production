@@ -233,7 +233,7 @@ class AdminProductViewSet(viewsets.ModelViewSet):
         """Get all variants for a product"""
         product = self.get_object()
         variants = product.variants.all()
-        serializer = ProductVariantSerializers(variants, many=True)
+        serializer = ProductVariantSerializer(variants, many=True)
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])

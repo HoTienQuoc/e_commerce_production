@@ -42,6 +42,23 @@ class ProductVariantService(BaseService):
                     validated_variants = serializer.validate_variants(data['variants'])  # pyright: ignore[reportAttributeAccessIssue]
 
                     # Process variants based on operation type
+                    self._process_variants(product, validated_variants,is_discount_update, is_stock_distribution, serializer_context)
+
+                    self.cache_service.clear_product_cache(product.id)
+
+                    from admin_dashboard.product_serializers import ProductFullSerializer
+                    serializer = ProductFullSerializer(product, context = serializer_context)
+
+                    return self.success_response(serializer.data)
+        except serializers.ValidationError as e:
+            self.log_exception(e, "Validation error managing variants")
+            return self.error_response(error="Validation error", details=e.detail if hasattr(e, 'detail') else str(e))
+        except Exception as e:
+            self.error_response(
+                error='Server error',
+                details=str(e),
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
     def _process_variations(self, product, variations_data):
@@ -137,6 +154,8 @@ class ProductVariantService(BaseService):
         # Update inventory based on operation type
         if is_stock_distribution:
             self._handle_stock_distribution(product, total_stock, current_total_stock)
+        elif not is_discount_update:
+            self._update_inventory_from_variants(product, total_stock)
 
 
 
@@ -228,4 +247,26 @@ class ProductVariantService(BaseService):
             is_redistribution = abs(total_stock - previous_stock) <= 0.01
 
             # Log this special operation type
-            
+            self.inventory_service.update_inventory_from_variants(product, total_stock, is_sync=True, adjustment_type='redistribution' if is_redistribution else 'stock_update', notes = f'{"Stock redistributed" if is_redistribution else "Stock Updated"} across variants (was: {previous_stock}, now: {total_stock})')
+        else:
+            product.ensure_inventory(total_stock)
+            from inventory.models import InventoryLog
+            InventoryLog.objects.create(
+                product = product,
+                previous_stock = 0,
+                current_stock = total_stock,
+                adjustment_type = 'initial_stock',
+                notes = 'Initial stock distribution across variants'
+            )
+
+
+    def _update_inventory_from_variants(self, product, total_stock):
+        """Update product inventory based on total variant stocks"""
+        inventory = getattr(product, 'inventory', None)
+
+        if inventory:
+            if inventory.current_stock != total_stock:
+                self.inventory_service.update_inventory_from_variants(product, total_stock, is_sync=True, adjustment_type='sync')
+
+        else:
+            product.ensure_inventory(total_stock)

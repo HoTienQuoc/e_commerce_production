@@ -103,6 +103,12 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+    def ensure_inventory(self, initial_stock = 0):
+        """Ensure inventory record exists"""
+        from inventory.services import InventoryService
+        service = InventoryService()
+        return service.initialize_inventory(self, initial_stock)
     
 
 class ProductImage(models.Model):

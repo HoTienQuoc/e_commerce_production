@@ -188,42 +188,42 @@ class InventoryService:
             }
 
 
-    def update_inventory_from_variants(self, product, total_stock, is_sync = False, adjustment_type=None, notes = None):
-        """Update inventory record based on variants stocks"""
-        inventory = getattr(product, 'inventory', None)
-        if not inventory:
-            return self.initialize_inventory(product, total_stock)
-        if inventory.current_stock == total_stock:
-            return inventory
-        if adjustment_type is None:
-            adjustment_type = 'sync' if is_sync else 'inventory'
-        if notes is None:
-            if adjustment_type == 'redistribution':
-                notes = 'Stock redistributed across variants' 
-            elif adjustment_type == 'sync':
-                notes = 'Synchronized stock with variants'
-            else:
-                notes = 'Stock updated from variants'
-        from .models import InventoryLog
-        InventoryLog.objects.create(
-            product = product,
-            previous_stock = inventory.current_stock,
-            current_stock = total_stock,
-            adjustment_type = adjustment_type,
-            notes = notes
-        )      
+    # def update_inventory_from_variants(self, product, total_stock, is_sync = False, adjustment_type=None, notes = None):
+    #     """Update inventory record based on variants stocks"""
+    #     inventory = getattr(product, 'inventory', None)
+    #     if not inventory:
+    #         return self.initialize_inventory(product, total_stock)
+    #     if inventory.current_stock == total_stock:
+    #         return inventory
+    #     if adjustment_type is None:
+    #         adjustment_type = 'sync' if is_sync else 'inventory'
+    #     if notes is None:
+    #         if adjustment_type == 'redistribution':
+    #             notes = 'Stock redistributed across variants' 
+    #         elif adjustment_type == 'sync':
+    #             notes = 'Synchronized stock with variants'
+    #         else:
+    #             notes = 'Stock updated from variants'
+    #     from .models import InventoryLog
+    #     InventoryLog.objects.create(
+    #         product = product,
+    #         previous_stock = inventory.current_stock,
+    #         current_stock = total_stock,
+    #         adjustment_type = adjustment_type,
+    #         notes = notes
+    #     )      
 
-        StockAdjustment.objects.create(
-            inventory = inventory,
-            quantity = total_stock - inventory.current_stock,
-            adjustment_type = adjustment_type,
-            reason = notes,
-            previous_stock = inventory.current_stock,
-            new_stock = total_stock,
-            reference = f'{adjustment_type.capitalize()} : {product.id}'
-        )
+    #     StockAdjustment.objects.create(
+    #         inventory = inventory,
+    #         quantity = total_stock - inventory.current_stock,
+    #         adjustment_type = adjustment_type,
+    #         reason = notes,
+    #         previous_stock = inventory.current_stock,
+    #         new_stock = total_stock,
+    #         reference = f'{adjustment_type.capitalize()} : {product.id}'
+    #     )
 
-        inventory.current_stock = total_stock
-        inventory.save(update_fields = ['current_stock'])
+    #     inventory.current_stock = total_stock
+    #     inventory.save(update_fields = ['current_stock'])
 
-        return inventory
+    #     return inventory
