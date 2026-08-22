@@ -133,7 +133,13 @@ class ProductVariantService(BaseService):
                     if variant.stock > 0:
                         self._log_variant_stock_change(product, variant, variant.stock, deleted=True)
                 product.variants.filter(id__in = variants_to_delete).delete()
-        
+
+        # Update inventory based on operation type
+        if is_stock_distribution:
+            self._handle_stock_distribution(product, total_stock, current_total_stock)
+
+
+
 
 
 
@@ -211,3 +217,15 @@ class ProductVariantService(BaseService):
             })
 
 
+
+
+    def _handle_stock_distribution(self, product, total_stock, previous_stock):
+        """Handle stock distribution across variants"""
+        inventory = getattr(product, 'inventory', None)
+
+        if inventory:
+            # Determine if this is a redistribution or a new stock assignment
+            is_redistribution = abs(total_stock - previous_stock) <= 0.01
+
+            # Log this special operation type
+            
