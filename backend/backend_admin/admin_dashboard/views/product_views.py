@@ -3,11 +3,12 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from rest_framework.pagination import PageNumberPagination
 from django.forms import ValidationError
 from django.db import transaction
 import time
 import logging
+
+from admin_dashboard.pagination import CustomResultsSetPagination
 
 from ecommerce.models import Product
 from inventory.services import InventoryService
@@ -22,7 +23,7 @@ class AdminProductViewSet(viewsets.ModelViewSet):
     """ViewSet for managin products in the admin dashboard"""
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     permission_classes = [IsAdminUser]
-    pagination_class = PageNumberPagination
+    pagination_class = CustomResultsSetPagination
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

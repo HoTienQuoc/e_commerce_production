@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     # third party apps
     "corsheaders",
     "rest_framework",
+    "django_filters",
 
     # local apps
     'authentication',
@@ -172,7 +173,7 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_CLASSES' : [
         'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle',
-    ]
+    ],
 }
 
 CELERY_TIMEZONE = "Africa/Nairobi"
