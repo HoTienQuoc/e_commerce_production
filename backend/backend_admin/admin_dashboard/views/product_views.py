@@ -243,6 +243,41 @@ class AdminProductViewSet(viewsets.ModelViewSet):
         self.product_service.request = request
         return self.product_service.manage_product_variants(product, request.data)
 
+
+    @action(detail=True, methods=['post'])
+    def distribute_stock(self, request, pk=None):
+        """Endpoint to redistribute existing stock across variants
+        This doesn't change the total inventory, only how it's distributed
+        """
+        product = self.get_object()
+        data = request.data.copy()
+
+        # Determine if this is a stock distribution or new stock assignment
+        user_existing_stock = data.get('use_existing_stock', True)
+
+        # Mark this as a stock distribution operation 
+        data['is_stock_distribution'] = user_existing_stock
+
+        if 'variants' not in data or not data['variants']:
+            return Response({
+                'error': 'No variants provided for stock distribution'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if user_existing_stock:
+            current_inventory = getattr(product, 'inventory', None)
+            current_total = current_inventory.current_stock if current_inventory else 0
+            requested_total = sum(variant.get('stock', 0) for variant in data['variants'])
+
+            if abs(current_total - requested_total) > 0.01:
+                return Response({
+                    'error': f"Total distributed stock ({requested_total}) must match current inventory ({current_total}) when using existing stock",
+                    'detail': 'Set use_existing_stock = false to override this validation'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        self.product_service.request = request
+        return self.product_service.manage_product_variants(self.product, data)
+
     
+
 
     

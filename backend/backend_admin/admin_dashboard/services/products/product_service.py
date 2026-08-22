@@ -9,6 +9,7 @@ from admin_dashboard.product_serializers import (ProductFullSerializer, ProductU
 from .base_service import BaseService
 from .product_cache_service import ProductCacheService
 from .product_filter_service import ProductFilterService
+from .product_variant_service import ProductVariantService
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ class ProductService(BaseService):
         self.cache_service = ProductCacheService()
         self.filter_service = ProductFilterService()
         self.inventory_service = InventoryService()
+        self.variant_service = ProductVariantService()
 
         # For tracking current product ID in operations
         self.current_product_id = None
@@ -129,6 +131,24 @@ class ProductService(BaseService):
             result = self.variant_service.manage_variants( # pyright: ignore[reportAttributeAccessIssue]
                 product, variant_data, serializer_context = serializer_context
             )
+
+            self.cache_service.clear_single_product_cache(product.id)
+
+            if isinstance(result, dict) and result.get('error'):
+                return self.error_response(**result) # pyright: ignore[reportArgumentType]
+            return result
+
+        except Exception as e:
+            product_id_for_logging = getattr(product, 'id', 'unknown')
+
+            self.log_exception(e, f'Failed to manage variants for product {product_id_for_logging}')
+
+            return self.error_response(
+                error=str(e),
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+            
 
 
 
