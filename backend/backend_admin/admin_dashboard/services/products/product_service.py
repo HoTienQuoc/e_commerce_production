@@ -126,7 +126,7 @@ class ProductService(BaseService):
             serializer_context = self.get_serializer_context()
 
             # Delegate to variant service, passing the context
-            result = self.variant_service.manage_variants(
+            result = self.variant_service.manage_variants( # pyright: ignore[reportAttributeAccessIssue]
                 product, variant_data, serializer_context = serializer_context
             )
 

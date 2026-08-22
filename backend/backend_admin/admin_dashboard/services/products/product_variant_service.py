@@ -91,9 +91,61 @@ class ProductVariantService(BaseService):
         current_total_stock = current_inventory.current_stock if current_inventory else 0
 
         for variant_data in validated_variants:
-            variant = existing_variants[variant_data]
-            old_stock = variant.stock
+            variant_id = str(variant_data.get('id')) if variant_data.get('id') else None
 
-            if is_discount_update:
-                self._update_variant_discount(variant, variant_data)
+            # Process existing variant
+            if variant_id and variant_id in existing_variants:
+                variant = existing_variants[variant_data]
+                old_stock = variant.stock
+
+                if is_discount_update:
+                    self._update_variant_discount(variant, variant_data)
+                elif is_stock_distribution:
+                    self._update_variant_stock_distribution(variant, variant_data)
+                else:
+                    self._update_variant_normal(variant, variant_data, serializer_context)
+
+                processed_ids.add(variant_id)
+                total_stock += variant.stock
+
+                # Log stock changes if needed
+                if old_stock != variant.stock:
+                    adjustment_type = 'redistribution' if is_stock_distribution else None
+                    self._log_variant_stock_change(product, variant, old_stock, adjustment_type=adjustment_type)
+
+            
+
+
+    def _update_variant_discount(self, variant, variant_data):
+        """Update only discount price for a variant"""
+        if 'discount_price' in variant_data:
+            variant.discount_price = variant_data['discount_price']
+            variant.save(update_fields = ['discount_price'])
+
+    def _update_variant_stock_distribution(self, variant, variant_data):
+        """Update stock for a variant during distribution"""
+        if 'stock' in variant_data:
+            variant.stock = variant_data['stock']
+            variant.save(update_fields = ['stock'])
+
+    def _update_variant_normal(self, variant, variant_data, serializer_context):
+        """Normal update for a variant with all fields"""
+        from admin_dashboard.product_serializers import ProductVariantSerializer
+
+        # Make a copy with product ID
+        variant_data_copy = {**variant_data, 'product': variant.product.id}
+
+        serializer = ProductVariantSerializer(
+            variant, data = variant_data_copy, partial = True, 
+            context = serializer_context
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            raise serializer.ValidationError({ # pyright: ignore[reportAttributeAccessIssue]
+                'variation_id': variant.id, 
+                'errors': serializer.errors
+            })
+
 
