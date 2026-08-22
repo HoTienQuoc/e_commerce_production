@@ -112,6 +112,68 @@ class ProductVariantService(BaseService):
                 if old_stock != variant.stock:
                     adjustment_type = 'redistribution' if is_stock_distribution else None
                     self._log_variant_stock_change(product, variant, old_stock, adjustment_type=adjustment_type)
+            # Create new variant (only in normal mode)
+            elif not is_discount_update and not is_stock_distribution:
+                new_variant = self._create_new_variant(product, variant_data, serializer_context)
+                if new_variant:
+                    processed_ids.add(str(new_variant.id)) # pyright: ignore[reportAttributeAccessIssue]
+                    total_stock += new_variant.stock # pyright: ignore[reportAttributeAccessIssue]
+
+                    # Log new variant stock
+                    if new_variant.stock > 0: # pyright: ignore[reportAttributeAccessIssue]
+                        self._log_variant_stock_change(product, new_variant, 0, adjustment_type='addition')
+
+        # Delete variants not included
+        if not is_discount_update and not is_stock_distribution:
+            variants_to_delete = set(existing_variants.keys()) - processed_ids
+            if variants_to_delete:
+                for variant_id in variants_to_delete:
+                    variant = existing_variants[variant_id]
+
+                    if variant.stock > 0:
+                        self._log_variant_stock_change(product, variant, variant.stock, deleted=True)
+                product.variants.filter(id__in = variants_to_delete).delete()
+        
+
+
+
+    def _create_new_variant(self, product, variant_data, serializer_context):
+        """Create a new variant for a product"""
+        from admin_dashboard.product_serializers import ProductVariantSerializer
+        variant_data['product'] = product.id
+        serializer = ProductVariantSerializer(
+            data = variant_data,
+            context = serializer_context
+        )
+
+        if serializer.is_valid():
+            return serializer.save()
+        else:
+            raise serializers.ValidationError()
+
+
+    def _log_variant_stock_change(self, product, variant, previous_stock, deleted=False, adjustment_type=None):
+        """Log stock changes for variants"""
+        if adjustment_type is None:
+            if deleted:
+                adjustment_type = 'deletion'
+            elif previous_stock < variant.stock:
+                adjustment_type = 'addition'
+            elif previous_stock > variant.stock:
+                adjustment_type = 'reduction'
+            else:
+                adjustment_type = 'no_change'
+
+        # Create log entry
+        VariantStockLog.objects.create(
+            product = product,
+            variant = variant,
+            previous_stock = previous_stock,
+            current_stock = variant.stock if not deleted else 0,
+            adjustment_type = adjustment_type,
+            notes = f"Variant {"delete" if deleted else "updated"}"
+        )
+
 
             
 
@@ -143,7 +205,7 @@ class ProductVariantService(BaseService):
         if serializer.is_valid():
             serializer.save()
         else:
-            raise serializer.ValidationError({ # pyright: ignore[reportAttributeAccessIssue]
+            raise serializers.ValidationError({
                 'variation_id': variant.id, 
                 'errors': serializer.errors
             })
