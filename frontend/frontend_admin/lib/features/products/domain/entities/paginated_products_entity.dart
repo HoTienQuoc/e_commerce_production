@@ -1,8 +1,8 @@
 import 'package:equatable/equatable.dart';
-import 'package:frontend_admin/features/products/domain/entities/products_entity.dart';
+import 'package:frontend_admin/features/products/domain/entities/product_entity.dart';
 
 class PaginatedProductsEntity extends Equatable {
-  final List<ProductsEntity> products;
+  final List<ProductEntity> products;
   final int totalCount;
   final int currentPage;
   final int totalPages;
@@ -32,7 +32,7 @@ class PaginatedProductsEntity extends Equatable {
   ];
 
   PaginatedProductsEntity copyWith({
-    List<ProductsEntity>? products,
+    List<ProductEntity>? products,
     int? totalCount,
     int? currentPage,
     int? totalPages,

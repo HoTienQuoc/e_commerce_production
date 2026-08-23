@@ -4,7 +4,7 @@ import 'package:frontend_admin/features/products/domain/entities/product_image_e
 import 'package:frontend_admin/features/variations/domain/entities/product_variant_entity.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variations_entity.dart';
 
-class ProductsEntity extends Equatable {
+class ProductEntity extends Equatable {
   final String id;
   final String name;
   final String description;
@@ -25,7 +25,7 @@ class ProductsEntity extends Equatable {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  const ProductsEntity({
+  const ProductEntity({
     required this.id,
     required this.name,
     required this.description,
@@ -83,7 +83,7 @@ class ProductsEntity extends Equatable {
     return null;
   }
 
-  ProductsEntity copyWith({
+  ProductEntity copyWith({
     String? id,
     String? name,
     String? description,
@@ -104,7 +104,7 @@ class ProductsEntity extends Equatable {
     DateTime? updatedAt,
     MoneyEntity? cost,
   }) {
-    return ProductsEntity(
+    return ProductEntity(
       id: id ?? this.id,
       name: name ?? this.name,
       description: description ?? this.description,
