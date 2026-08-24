@@ -170,3 +170,21 @@ extension StockStatusX on StockStatus {
     }
   }
 }
+
+extension StockStatusExtension on StockStatus {
+  static StockStatus fromString(String status) {
+    switch (status.toLowerCase()) {
+      case 'in_stock':
+      case 'instock':
+        return StockStatus.inStock;
+      case 'low_stock':
+      case 'lowstock':
+        return StockStatus.lowStock;
+      case 'out_of_stock':
+      case 'outofstock':
+        return StockStatus.outOfStock;
+      default:
+        return StockStatus.inStock;
+    }
+  }
+}
