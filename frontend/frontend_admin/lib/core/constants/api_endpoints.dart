@@ -10,4 +10,25 @@ class ApiEndpoints {
   static const String refreshToken = '/api/auth/token/refresh/';
   static const String validateToken = '/api/auth/token/validate/';
   static const String logout = '/api/auth/logout/';
+
+  // Product Management endpoints
+  static const String productList = '/api/admin/products/';
+  static const String productDetail = '/api/admin/products/{id}/';
+  static const String manageProductVariants =
+      '/api/admin/products/{id}/manage_variants/';
+  static const String productVariants = '/api/admin/products/{id}/variants/';
+  static const String distributeStock =
+      '/api/admin/products/{id}/distribute_stock/';
+  static const String stockAdjustment =
+      '/api/admin/products/{id}/stock_adjustment/';
+  static const String manageImages = '/api/admin/products/{id}/manage_images/';
+  static const String deleteImage = '/api/admin/products/{id}/delete_image/';
+  static const String bulkDelete = '/api/admin/products/bulk_delete/';
+  static const String productFilters = '/api/admin/products/filters/';
+  static const String categories = '/api/admin/categories/';
+
+  // Helper method
+  static String formatUrl(String url, String id) {
+    return url.replaceAll('{id}', id);
+  }
 }

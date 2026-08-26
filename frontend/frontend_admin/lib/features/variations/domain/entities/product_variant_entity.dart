@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:frontend_admin/features/products/domain/entities/money_entity.dart';
 import 'package:frontend_admin/features/products/domain/entities/product_image_entity.dart';
-import 'package:frontend_admin/features/variations/domain/entities/product_variations_entity.dart';
 
 class ProductVariantEntity extends Equatable {
   final String id;
