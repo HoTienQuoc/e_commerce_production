@@ -1,3 +1,6 @@
+import 'package:frontend_admin/core/constants/api_endpoints.dart';
+import 'package:frontend_admin/core/errors/exceptions.dart';
+import 'package:frontend_admin/core/network/api_client.dart';
 import 'package:frontend_admin/features/products/data/models/paginated_product_model.dart';
 import 'package:frontend_admin/features/products/data/models/product_filter_model.dart';
 import 'package:frontend_admin/features/products/data/models/product_image_model.dart';
@@ -22,7 +25,7 @@ abstract class ProductRemoteDatasource {
     List<String>? removedImageIds,
   });
 
-  Future<bool> deleteProducts(String id);
+  Future<bool> deleteProduct(String id);
 
   Future<bool> updateProductStock(String id, int newStock, String reason);
 
@@ -54,4 +57,159 @@ abstract class ProductRemoteDatasource {
     String id, {
     required List<dynamic> images,
   });
+}
+
+class ProductRemoteDataSourceImpl implements ProductRemoteDatasource {
+  final ApiClient client;
+
+  ProductRemoteDataSourceImpl({required this.client});
+
+  @override
+  Future<bool> bulkDeleteProducts(List<String> productIds) async {
+    await client.post(
+      ApiEndpoints.bulkDelete,
+      data: {'product_ids': productIds},
+    );
+    return true;
+  }
+
+  @override
+  Future<ProductModel> createProduct(
+    ProductModel product, {
+    List<dynamic>? images,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<bool> deleteProductImage(String productId, String imageId) async {
+    final endpoint = ApiEndpoints.formatUrl(
+      ApiEndpoints.deleteImage,
+      productId,
+    );
+    await client.post(endpoint, data: {'image_id': imageId});
+    return true;
+  }
+
+  @override
+  Future<bool> deleteProduct(String id) async {
+    final endpoint = ApiEndpoints.formatUrl(ApiEndpoints.productDetail, id);
+    await client.delete(endpoint);
+    return true;
+  }
+
+  @override
+  Future<ProductModel> getProductById(String id) async {
+    final endpoint = ApiEndpoints.formatUrl(ApiEndpoints.productDetail, id);
+    final response = await client.get(endpoint);
+    return ProductModel.fromJson(response);
+  }
+
+  @override
+  Future<List<CategoryModel>> getProductCategories() async {
+    final response = await client.get(ApiEndpoints.categories);
+    if (response is List) {
+      return response
+          .map((category) => CategoryModel.fromJson(category))
+          .toList();
+    } else if (response is Map<String, dynamic> &&
+        response.containsKey('results')) {
+      final categories = response['results'] as List;
+      return categories
+          .map((category) => CategoryModel.fromJson(category))
+          .toList();
+    }
+    throw ServerException(message: 'Unexpected format for categories response');
+  }
+
+  @override
+  Future<ProductFilterModel> getProductFilters() async {
+    final response = await client.get(ApiEndpoints.productFilters);
+    return ProductFilterModel.fromJson(response);
+  }
+
+  @override
+  Future<PaginatedProductModel> getProductsPaginated(
+    Map<String, dynamic> params,
+  ) async {
+    final response = await client.get(
+      ApiEndpoints.productList,
+      queryParamters: params,
+    );
+    return PaginatedProductModel.fromJson(response);
+  }
+
+  @override
+  Future<List<ProductImageModel>> manageProductImages(
+    String id, {
+    required List<dynamic> images,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<bool> toggleProductStatus(String id) async {
+    final endpoint = ApiEndpoints.formatUrl(ApiEndpoints.productDetail, id);
+    await client.patch(endpoint, data: {'is_active': null});
+    return true;
+  }
+
+  @override
+  Future<ProductModel> updateProduct(
+    String id,
+    ProductModel product, {
+    List<dynamic>? newImages,
+    List<String>? removedImageIds,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ProductModel> updateProductPrice(
+    String id, {
+    required double price,
+    double? discountPrice,
+  }) async {
+    final endpoint = ApiEndpoints.formatUrl(ApiEndpoints.productDetail, id);
+    final body = {'price': price};
+    if (discountPrice != null) {
+      body['discount_price'] = discountPrice;
+    }
+    final response = await client.patch(endpoint, data: body);
+    return ProductModel.fromJson(response);
+  }
+
+  @override
+  Future<ProductModel> updateProductProfitMargin(
+    String id, {
+    required double cost,
+    required double price,
+    double? discountPrice,
+    required double profitMargin,
+  }) async {
+    final endpoint = ApiEndpoints.formatUrl(ApiEndpoints.productDetail, id);
+    final Map<String, dynamic> body = {
+      'cost': cost,
+      'price': price,
+      'profit_margin': profitMargin,
+    };
+
+    if (discountPrice != null) {
+      body['discount_price'] = discountPrice;
+    }
+
+    final response = await client.patch(endpoint, data: body);
+    return ProductModel.fromJson(response);
+  }
+
+  @override
+  Future<bool> updateProductStock(
+    String id,
+    int newStock,
+    String reason,
+  ) async {
+    final endpoint = ApiEndpoints.formatUrl(ApiEndpoints.stockAdjustment, id);
+    await client.post(endpoint, data: {'quantity': newStock, 'reason': reason});
+    return true;
+  }
 }
