@@ -1,6 +1,10 @@
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
 import 'package:frontend_admin/core/constants/api_endpoints.dart';
 import 'package:frontend_admin/core/errors/exceptions.dart';
 import 'package:frontend_admin/core/network/api_client.dart';
+import 'package:frontend_admin/core/utils/web_image_utils.dart';
 import 'package:frontend_admin/features/products/data/models/paginated_product_model.dart';
 import 'package:frontend_admin/features/products/data/models/product_filter_model.dart';
 import 'package:frontend_admin/features/products/data/models/product_image_model.dart';
@@ -77,8 +81,42 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDatasource {
   Future<ProductModel> createProduct(
     ProductModel product, {
     List<dynamic>? images,
-  }) {
-    throw UnimplementedError();
+  }) async {
+    final fields = product.toJsonForcreate();
+    dynamic requestData;
+    if (images != null && images.isNotEmpty) {
+      final formFields = fields.map(
+        (key, value) => MapEntry(key, value.toString()),
+      );
+      final List<MapEntry<String, MultipartFile>> fileEntries = [];
+
+      for (int i = 0; i < images.length; i++) {
+        var image = images[i];
+        if (image is Map<String, dynamic> && image.containsKey('data')) {
+          final Uint8List bytes = WebImageUtils.extractBytesFromDataUrl(
+            image['data'],
+          );
+          final String fileName = image['name'] ?? 'product_image_$i.jpg';
+          fileEntries.add(
+            MapEntry(
+              'images',
+              MultipartFile.fromBytes(bytes, filename: fileName),
+            ),
+          );
+          if (image['is_primary'] == true) {
+            formFields['primary_image_index'] = i.toString();
+          }
+        }
+      }
+      requestData = FormData.fromMap(formFields)..files.addAll(fileEntries);
+    } else {
+      requestData = fields;
+    }
+    final response = await client.post(
+      ApiEndpoints.productList,
+      data: requestData,
+    );
+    return ProductModel.fromJson(response);
   }
 
   @override
@@ -143,8 +181,37 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDatasource {
   Future<List<ProductImageModel>> manageProductImages(
     String id, {
     required List<dynamic> images,
-  }) {
-    throw UnimplementedError();
+  }) async {
+    final endpoint = ApiEndpoints.formatUrl(ApiEndpoints.manageImages, id);
+    final formFields = <String, String>{};
+    final List<MapEntry<String, MultipartFile>> fileEntries = [];
+
+    for (int i = 0; i < images.length; i++) {
+      var image = images[i];
+      if (image is Map<String, dynamic> && image.containsKey('data')) {
+        final Uint8List bytes = WebImageUtils.extractBytesFromDataUrl(
+          image['data'],
+        );
+        final String fileName = image['name'] ?? 'product_name_$i.jpg';
+        fileEntries.add(
+          MapEntry(
+            'images',
+            MultipartFile.fromBytes(bytes, filename: fileName),
+          ),
+        );
+        if (image['is_primary'] == true) {
+          formFields['primary_image_index'] = i.toString();
+        }
+      }
+    }
+    final requestData = FormData.fromMap(formFields)..files.addAll(fileEntries);
+    final response = await client.post(endpoint, data: requestData);
+    if (response is List) {
+      return response.map((img) => ProductImageModel.fromJson(img)).toList();
+    }
+    throw ServerException(
+      message: 'Expected a list of images but got something else',
+    );
   }
 
   @override
@@ -160,8 +227,44 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDatasource {
     ProductModel product, {
     List<dynamic>? newImages,
     List<String>? removedImageIds,
-  }) {
-    throw UnimplementedError();
+  }) async {
+    final endpoint = ApiEndpoints.formatUrl(ApiEndpoints.productDetail, id);
+    final fields = product.toJsonForUpdate();
+    if (removedImageIds != null && removedImageIds.isNotEmpty) {
+      fields['removed_image_ids'] = removedImageIds;
+    }
+    dynamic requestData;
+
+    if (newImages != null && newImages.isNotEmpty) {
+      final formFields = fields.map(
+        (key, value) => MapEntry(key, value.toString()),
+      );
+      final List<MapEntry<String, MultipartFile>> filesEntries = [];
+      for (int i = 0; i < newImages.length; i++) {
+        var image = newImages[i];
+        if (image is Map<String, dynamic> && image.containsKey('data')) {
+          final Uint8List bytes = WebImageUtils.extractBytesFromDataUrl(
+            image['data'],
+          );
+          final String fileName = image['name'] ?? 'new_image_$i.jpg';
+          filesEntries.add(
+            MapEntry(
+              'new_images',
+              MultipartFile.fromBytes(bytes, filename: fileName),
+            ),
+          );
+          if (image['is_primary'] == true) {
+            formFields['primary_image_index'] = i.toString();
+          }
+        }
+      }
+      requestData = FormData.fromMap(formFields)..files.addAll(filesEntries);
+    } else {
+      requestData = fields;
+    }
+
+    final response = await client.patch(endpoint, data: requestData);
+    return ProductModel.fromJson(response);
   }
 
   @override
