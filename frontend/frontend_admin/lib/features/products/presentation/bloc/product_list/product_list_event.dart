@@ -1,14 +1,11 @@
 part of 'product_list_bloc.dart';
 
-import 'package:frontend_admin/features/products/domain/entities/product_entity.dart';
-
 abstract class ProductListEvent extends Equatable {
   const ProductListEvent();
 
   @override
   List<Object?> get props => [];
 }
-
 
 class GetPaginatedProductsEvent extends ProductListEvent {
   final int page;
@@ -22,10 +19,28 @@ class GetPaginatedProductsEvent extends ProductListEvent {
   final StockStatus? stockStatus;
   final Map<String, dynamic>? extraParams;
 
-  GetPaginatedProductsEvent({required this.page, required this.pageSize,  this.search,  this.categoryId,  this.minPrice,  this.maxPrice,  this.status,  this.stockStatus,  this.extraParams});
+  GetPaginatedProductsEvent({
+    required this.page,
+    required this.pageSize,
+    this.search,
+    this.categoryId,
+    this.minPrice,
+    this.maxPrice,
+    this.status,
+    this.stockStatus,
+    this.extraParams,
+  });
 
   @override
-  List<Object?> get props => [page, pageSize, search, categoryId, status, stockStatus, extraParams];
+  List<Object?> get props => [
+    page,
+    pageSize,
+    search,
+    categoryId,
+    status,
+    stockStatus,
+    extraParams,
+  ];
 }
 
 class SearchProductsEvent extends ProductListEvent {
@@ -33,7 +48,11 @@ class SearchProductsEvent extends ProductListEvent {
   final bool resetPage;
   final bool resetFilters;
 
-  SearchProductsEvent({ this.search,  this.resetPage = false,  this.resetFilters = false});
+  SearchProductsEvent({
+    this.search,
+    this.resetPage = false,
+    this.resetFilters = false,
+  });
 
   @override
   List<Object?> get props => [search, resetPage, resetFilters];
@@ -53,7 +72,11 @@ class SetCachedProductsEvent extends ProductListEvent {
   final int page;
   final int totalCount;
 
-  SetCachedProductsEvent({required this.products, required this.page, required this.totalCount});
+  SetCachedProductsEvent({
+    required this.products,
+    required this.page,
+    required this.totalCount,
+  });
 }
 
 class ClearFiltersEvent extends ProductListEvent {
@@ -105,4 +128,3 @@ class ProductDeletedEvent extends ProductListEvent {
   @override
   List<Object?> get props => [productId];
 }
-
