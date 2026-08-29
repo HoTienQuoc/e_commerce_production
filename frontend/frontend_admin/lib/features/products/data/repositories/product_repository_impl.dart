@@ -3,11 +3,16 @@ import 'package:frontend_admin/core/errors/exceptions.dart';
 import 'package:frontend_admin/core/errors/failure.dart';
 import 'package:frontend_admin/core/network/network_info.dart';
 import 'package:frontend_admin/features/products/data/data_sources/product_remote_datasource.dart';
+import 'package:frontend_admin/features/products/data/models/money_model.dart';
+import 'package:frontend_admin/features/products/data/models/product_image_model.dart';
+import 'package:frontend_admin/features/products/data/models/product_model.dart';
 import 'package:frontend_admin/features/products/domain/entities/paginated_products_entity.dart';
 import 'package:frontend_admin/features/products/domain/entities/product_entity.dart';
 import 'package:frontend_admin/features/products/domain/entities/product_filters_entity.dart';
 import 'package:frontend_admin/features/products/domain/entities/product_image_entity.dart';
 import 'package:frontend_admin/features/products/domain/repositories/product_repository.dart';
+import 'package:frontend_admin/features/variations/data/models/product_variant_model.dart';
+import 'package:frontend_admin/features/variations/data/models/product_variation_model.dart';
 
 class ProductRepositoryImpl implements ProductRepository {
   final ProductRemoteDatasource remoteDatasource;
@@ -55,6 +60,133 @@ class ProductRepositoryImpl implements ProductRepository {
         _mapProductToModel(product),
         images: images,
       ),
+    );
+  }
+
+  ProductModel _mapProductToModel(ProductEntity product) {
+    if (product is ProductModel) {
+      return product;
+    }
+    return ProductModel(
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      category: product.category is CategoryModel
+          ? product.category as CategoryModel
+          : CategoryModel(id: product.category.id, name: product.category.name),
+      price: product.price is MoneyModel
+          ? product.price as MoneyModel
+          : MoneyModel(
+              value: product.price.value,
+              currency: product.price.currency,
+            ),
+      cost: product.cost != null
+          ? (product.cost is MoneyModel
+                ? product.cost as MoneyModel
+                : MoneyModel(
+                    value: product.cost!.value,
+                    currency: product.cost!.currency,
+                  ))
+          : null,
+      discountPrice: product.discountPrice != null
+          ? (product.discountPrice is MoneyModel
+                ? product.discountPrice as MoneyModel
+                : MoneyModel(
+                    value: product.discountPrice!.value,
+                    currency: product.discountPrice!.currency,
+                  ))
+          : null,
+      stock: product.stock,
+      images: product.images
+          .map(
+            (image) => image is ProductImageModel
+                ? image
+                : ProductImageModel(
+                    id: image.id,
+                    imageUrl: image.imageUrl,
+                    altText: image.altText,
+                    isPrimary: image.isPrimary,
+                    productId: image.productId,
+                  ),
+          )
+          .toList(),
+      primaryImage: product.primaryImage != null
+          ? (product.primaryImage is ProductImageModel
+                ? product.primaryImage as ProductImageModel
+                : ProductImageModel(
+                    id: product.primaryImage!.id,
+                    imageUrl: product.primaryImage!.imageUrl,
+                    altText: product.primaryImage!.altText,
+                    isPrimary: product.primaryImage!.isPrimary,
+                    order: product.primaryImage!.order,
+                    createdAt: product.primaryImage!.createdAt,
+                    productId: product.primaryImage!.productId,
+                  ))
+          : null,
+      variations: product.variations
+          .map(
+            (variation) => variation is ProductVariationModel
+                ? variation
+                : ProductVariationModel(
+                    id: variation.id,
+                    name: variation.name,
+                    values: variation.values,
+                  ),
+          )
+          .toList(),
+      variants: product.variants
+          .map(
+            (variant) => variant is ProductVariantModel
+                ? variant
+                : ProductVariantModel(
+                    id: variant.id,
+                    productId: variant.productId,
+                    attributes: variant.attributes,
+                    sku: variant.sku,
+                    price: variant.price is MoneyModel
+                        ? variant.price as MoneyModel
+                        : MoneyModel(
+                            value: variant.discountPrice!.value,
+                            currency: variant.price.currency,
+                          ),
+                    discountPrice: variant.discountPrice != null
+                        ? (variant.discountPrice is MoneyModel
+                              ? variant.discountPrice as MoneyModel
+                              : MoneyModel(
+                                  value: variant.discountPrice!.value,
+                                  currency: variant.discountPrice!.currency,
+                                ))
+                        : null,
+                    stock: variant.stock,
+                    image: variant.image != null
+                        ? (variant.image is ProductImageModel
+                              ? variant.image as ProductImageModel
+                              : ProductImageModel(
+                                  id: variant.image!.id,
+                                  imageUrl: variant.image!.imageUrl,
+                                  altText: variant.image!.altText,
+                                  isPrimary: variant.image!.isPrimary,
+                                  order: variant.image!.order,
+                                  createdAt: variant.image!.createdAt,
+                                  productId: variant.image!.productId,
+                                ))
+                        : null,
+                    createdAt: variant.createdAt,
+                    updatedAt: variant.updatedAt,
+                  ),
+          )
+          .toList(),
+      rating: product.rating is RatingModel
+          ? product.rating as RatingModel
+          : RatingModel(
+              value: product.rating.value,
+              count: product.rating.count,
+            ),
+      stockStatus: product.stockStatus,
+      isActive: product.isActive,
+      initialStock: product.initialStock,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
     );
   }
 
