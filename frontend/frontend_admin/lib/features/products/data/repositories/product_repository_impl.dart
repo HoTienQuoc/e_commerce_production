@@ -46,8 +46,12 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> bulkDeleteProducts(List<String> productIds) {
-    throw UnimplementedError();
+  Future<Either<Failure, bool>> bulkDeleteProducts(
+    List<String> productIds,
+  ) async {
+    return await _getRepositoryAction(
+      () => remoteDatasource.bulkDeleteProducts(productIds),
+    );
   }
 
   @override
@@ -191,16 +195,18 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> deleteProduct(String id) {
-    throw UnimplementedError();
+  Future<Either<Failure, bool>> deleteProduct(String id) async {
+    return await _getRepositoryAction(() => remoteDatasource.deleteProduct(id));
   }
 
   @override
   Future<Either<Failure, bool>> deleteProductImage(
     String productId,
     String imageId,
-  ) {
-    throw UnimplementedError();
+  ) async {
+    return await _getRepositoryAction(
+      () => remoteDatasource.deleteProductImage(productId, imageId),
+    );
   }
 
   @override
@@ -211,13 +217,17 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
-  Future<Either<Failure, List<ProductCategory>>> getProductCategories() {
-    throw UnimplementedError();
+  Future<Either<Failure, List<ProductCategory>>> getProductCategories() async {
+    return await _getRepositoryAction(
+      () => remoteDatasource.getProductCategories(),
+    );
   }
 
   @override
-  Future<Either<Failure, ProductFiltersEntity>> getProductFilters() {
-    throw UnimplementedError();
+  Future<Either<Failure, ProductFiltersEntity>> getProductFilters() async {
+    return await _getRepositoryAction(
+      () => remoteDatasource.getProductFilters(),
+    );
   }
 
   @override
@@ -259,13 +269,21 @@ class ProductRepositoryImpl implements ProductRepository {
     String id,
     List<dynamic> images,
     List<bool> isPrimaryList,
-  ) {
-    throw UnimplementedError();
+  ) async {
+    return await _getRepositoryAction<List<ProductImageEntity>>(() async {
+      final imageModels = await remoteDatasource.manageProductImages(
+        id,
+        images: images,
+      );
+      return imageModels.map((model) => model.toDomain()).toList();
+    });
   }
 
   @override
-  Future<Either<Failure, bool>> toggleProductStatus(String id) {
-    throw UnimplementedError();
+  Future<Either<Failure, bool>> toggleProductStatus(String id) async {
+    return await _getRepositoryAction(
+      () => remoteDatasource.toggleProductStatus(id),
+    );
   }
 
   @override
@@ -274,8 +292,15 @@ class ProductRepositoryImpl implements ProductRepository {
     ProductEntity product, {
     List<dynamic>? newImages,
     List<String>? removedImagesIds,
-  }) {
-    throw UnimplementedError();
+  }) async {
+    return await _getRepositoryAction(
+      () => remoteDatasource.updateProduct(
+        id,
+        _mapProductToModel(product),
+        newImages: newImages,
+        removedImageIds: removedImagesIds,
+      ),
+    );
   }
 
   @override
@@ -283,8 +308,15 @@ class ProductRepositoryImpl implements ProductRepository {
     String id, {
     required double price,
     double? discountPrice,
-  }) {
-    throw UnimplementedError();
+  }) async {
+    return await _getRepositoryAction(() async {
+      await remoteDatasource.updateProductPrice(
+        id,
+        price: price,
+        discountPrice: discountPrice,
+      );
+      return true;
+    });
   }
 
   @override
@@ -294,8 +326,15 @@ class ProductRepositoryImpl implements ProductRepository {
     required double price,
     double? discountPrice,
     required double profitMargin,
-  }) {
-    throw UnimplementedError();
+  }) async {
+    return await _getRepositoryAction(
+      () => remoteDatasource.updateProductProfitMargin(
+        id,
+        cost: cost,
+        price: price,
+        profitMargin: profitMargin,
+      ),
+    );
   }
 
   @override
@@ -303,7 +342,9 @@ class ProductRepositoryImpl implements ProductRepository {
     String id,
     int newStock,
     String reason,
-  ) {
-    throw UnimplementedError();
+  ) async {
+    return await _getRepositoryAction(
+      () => remoteDatasource.updateProductStock(id, newStock, reason),
+    );
   }
 }
