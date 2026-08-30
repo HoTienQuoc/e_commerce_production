@@ -17,8 +17,8 @@ class ProductDetailsBloc
   final UpdateProductPriceUsecase updateProductPrice;
   final UpdateProductStockUsecase updateProductStock;
   final UpdateProductProfitMarginUsecase updateProductProfitMargin;
-  final ManageProductImagesUsecase productImages;
-  final DeleteProductImageUsecase deleteProductImageUsecase;
+  final ManageProductImagesUsecase manageProductImages;
+  final DeleteProductImageUsecase deleteProductImage;
 
   ProductDetailsBloc({
     required this.getProductById,
@@ -28,9 +28,22 @@ class ProductDetailsBloc
     required this.updateProductPrice,
     required this.updateProductStock,
     required this.updateProductProfitMargin,
-    required this.productImages,
-    required this.deleteProductImageUsecase,
-  }) : super(ProductDetailInitial()) {}
+    required this.manageProductImages,
+    required this.deleteProductImage,
+  }) : super(ProductDetailInitial()) {
+    on<GetProductByIdEvent>(_onGetProductById);
+    on<CreateProductEvent>(_onCreateProduct);
+    on<UpdateProductEvent>(_onUpdateProduct);
+    on<DeleteProductEvent>(_onDeleteProduct);
+    on<UpdateProductStockEvent>(_onUpdateProductStock);
+    on<UpdateProductPriceEvent>(_onUpdateProductPrice);
+    on<UpdateProductProfitMarginEvent>(_onUpdateProductProfitMargin);
+    on<ManageProductImagesEvent>(_onManageProductImages);
+    on<DeleteProductImageEvent>(_onDeleteProductImage);
+    on<ClearProductDetailErrorEvent>(_onClearProductError);
+    on<ClearProductDetailOperationSuccessEvent>(_onClearOperationSuccess);
+    on<ResetProductDetailStateEvent>(_onResetProductDetailState);
+  }
 
   Future<void> _onGetProductById(
     GetProductByIdEvent event,
@@ -251,6 +264,145 @@ class ProductDetailsBloc
         }
       },
     );
+  }
+
+  Future<void> _onUpdateProductProfitMargin(
+    UpdateProductProfitMarginEvent event,
+    Emitter<ProductDetailsState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        isOperationLoading: true,
+        clearError: true,
+        clearOperationSuccess: true,
+      ),
+    );
+
+    final result = await updateProductProfitMargin(
+      UpdateProductProfitMarginParams(
+        id: event.id,
+        cost: event.cost,
+        price: event.price,
+        profitMargin: event.profitMargin,
+        discountPrice: event.discountPrice,
+      ),
+    );
+
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          errorMessage: _mapFailureToMessage(failure),
+          isOperationLoading: false,
+        ),
+      ),
+      (updatedProduct) {
+        emit(
+          state.copyWith(
+            product: updatedProduct,
+            isOperationLoading: false,
+            isOperationSuccess: true,
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _onManageProductImages(
+    ManageProductImagesEvent event,
+    Emitter<ProductDetailsState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        isOperationLoading: true,
+        clearError: true,
+        clearOperationSuccess: true,
+      ),
+    );
+
+    final result = await manageProductImages(
+      ManageImagesParams(
+        id: event.id,
+        images: event.images,
+        isPrimaryList: event.isPrimaryList,
+      ),
+    );
+
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          errorMessage: _mapFailureToMessage(failure),
+          isOperationLoading: false,
+        ),
+      ),
+      (images) {
+        if (state.product?.id == event.id) {
+          final updatedProduct = state.product!.copyWith(images: images);
+          emit(
+            state.copyWith(
+              product: updatedProduct,
+              isOperationLoading: false,
+              isOperationSuccess: true,
+            ),
+          );
+        } else {
+          emit(
+            state.copyWith(isOperationLoading: false, isOperationSuccess: true),
+          );
+        }
+      },
+    );
+  }
+
+  Future<void> _onDeleteProductImage(
+    DeleteProductImageEvent event,
+    Emitter<ProductDetailsState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        isOperationLoading: true,
+        clearError: true,
+        clearOperationSuccess: true,
+      ),
+    );
+
+    final result = await deleteProductImage(
+      DeleteImageParams(productId: event.productId, imageId: event.imageId),
+    );
+
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          errorMessage: _mapFailureToMessage(failure),
+          isOperationLoading: false,
+        ),
+      ),
+      (success) => emit(
+        state.copyWith(isOperationLoading: false, isOperationSuccess: true),
+      ),
+    );
+  }
+
+  void _onClearProductError(
+    ClearProductDetailErrorEvent event,
+    Emitter<ProductDetailsState> emit,
+  ) {
+    emit(state.copyWith(clearError: true));
+  }
+
+  void _onClearOperationSuccess(
+    ClearProductDetailOperationSuccessEvent event,
+    Emitter<ProductDetailsState> emit,
+  ) {
+    if (state.isOperationSuccess) {
+      emit(state.copyWith(clearOperationSuccess: true));
+    }
+  }
+
+  void _onResetProductDetailState(
+    ResetProductDetailStateEvent event,
+    Emitter<ProductDetailsState> emit,
+  ) {
+    emit(ProductDetailsState());
   }
 
   String _mapFailureToMessage(Failure failure) {

@@ -21,5 +21,5 @@ class DeleteImageParams {
   final String productId;
   final String imageId;
 
-  DeleteImageParams(this.productId, this.imageId);
+  DeleteImageParams({required this.productId, required this.imageId});
 }
