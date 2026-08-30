@@ -50,3 +50,5 @@ class ProductDetailsState extends Equatable {
     );
   }
 }
+
+class ProductDetailInitial extends ProductDetailsState {}

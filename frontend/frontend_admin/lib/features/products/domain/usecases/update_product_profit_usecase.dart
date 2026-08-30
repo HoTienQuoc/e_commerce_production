@@ -4,15 +4,15 @@ import 'package:frontend_admin/core/usecases/usecase.dart';
 import 'package:frontend_admin/features/products/domain/entities/product_entity.dart';
 import 'package:frontend_admin/features/products/domain/repositories/product_repository.dart';
 
-class UpdateProductProfitUsecase
-    implements UseCase<ProductEntity, UpdateProfitMarginParams> {
+class UpdateProductProfitMarginUsecase
+    implements UseCase<ProductEntity, UpdateProductProfitMarginParams> {
   final ProductRepository repository;
 
-  UpdateProductProfitUsecase(this.repository);
+  UpdateProductProfitMarginUsecase(this.repository);
 
   @override
   Future<Either<Failure, ProductEntity>> call(
-    UpdateProfitMarginParams params,
+    UpdateProductProfitMarginParams params,
   ) async {
     return await repository.updateProductProfitMargin(
       params.id,
@@ -24,14 +24,14 @@ class UpdateProductProfitUsecase
   }
 }
 
-class UpdateProfitMarginParams {
+class UpdateProductProfitMarginParams {
   final String id;
   final double cost;
   final double price;
   final double? discountPrice;
   final double profitMargin;
 
-  UpdateProfitMarginParams({
+  UpdateProductProfitMarginParams({
     required this.id,
     required this.cost,
     required this.price,

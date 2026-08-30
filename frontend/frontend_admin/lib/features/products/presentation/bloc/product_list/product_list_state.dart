@@ -19,7 +19,7 @@ class ProductListState extends Equatable {
   final int currentPage;
   final int pageSize;
 
-  ProductListState({
+  const ProductListState({
     this.paginatedProducts,
     this.categories,
     this.filters,
