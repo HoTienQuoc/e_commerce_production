@@ -116,6 +116,8 @@ class ToggleProductStatusEvent extends ProductListEvent {
   List<Object?> get props => [id];
 }
 
+class ClearOperationSuccessEvent extends ProductListEvent {}
+
 class ClearProductErrorEvent extends ProductListEvent {}
 
 class ResetProductListEvent extends ProductListEvent {}

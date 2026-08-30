@@ -29,7 +29,21 @@ class ProductListBloc extends Bloc<ProductListEvent, ProductListState> {
     required this.getProductCategories,
     required this.getProductFilters,
     required this.toggleProductStatus,
-  }) : super(ProductListInitial()) {}
+  }) : super(ProductListInitial()) {
+    on<GetPaginatedProductsEvent>(_onGetPaginatedProducts);
+    on<BulkDeleteProductsEvent>(_onBulkDeleteProducts);
+    on<GetProductCategoriesEvent>(_onGetProductCategories);
+    on<GetProductFiltersEvent>(_onGetProductFilters);
+    on<ToggleProductStatusEvent>(_onToggleProductStatus);
+    on<LoadMoreProductsEvent>(_onLoadMoreProducts);
+    on<ClearProductErrorEvent>(_onClearProductError);
+    on<ClearOperationSuccessEvent>(_onClearOperationSuccess);
+    on<ResetProductListEvent>(_onResetProductListState);
+    on<ProductDeletedEvent>(_onProductDeleted);
+    on<SearchProductsEvent>(_onSearchProducts);
+    on<SetLoadingEvent>(_onSetLoading);
+    on<ClearFiltersEvent>(_onClearFilters);
+  }
 
   void refreshProductList({bool bypassCache = true}) {
     add(
@@ -169,7 +183,10 @@ class ProductListBloc extends Bloc<ProductListEvent, ProductListState> {
     }
   }
 
-  void _clearFilters(ClearFiltersEvent event, Emitter<ProductListState> emit) {
+  void _onClearFilters(
+    ClearFiltersEvent event,
+    Emitter<ProductListState> emit,
+  ) {
     // Reset all filter state variables
     _currentSearchQuery = null;
     _currentCategoryId = null;
@@ -470,6 +487,29 @@ class ProductListBloc extends Bloc<ProductListEvent, ProductListState> {
         );
       },
     );
+  }
+
+  void _onClearProductError(
+    ClearProductErrorEvent event,
+    Emitter<ProductListState> emit,
+  ) {
+    emit(state.copyWith(clearError: true));
+  }
+
+  void _onClearOperationSuccess(
+    ClearOperationSuccessEvent event,
+    Emitter<ProductListState> emit,
+  ) {
+    if (state.isOperationSuccess) {
+      emit(state.copyWith(clearOperationSuccess: true));
+    }
+  }
+
+  void _onResetProductListState(
+    ResetProductListEvent event,
+    Emitter<ProductListState> emit,
+  ) {
+    emit(ProductListState());
   }
 
   String _mapFailureToMessage(Failure failure) {
