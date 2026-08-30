@@ -19,7 +19,7 @@ class GetPaginatedProductsEvent extends ProductListEvent {
   final StockStatus? stockStatus;
   final Map<String, dynamic>? extraParams;
 
-  GetPaginatedProductsEvent({
+  const GetPaginatedProductsEvent({
     required this.page,
     required this.pageSize,
     this.search,
@@ -44,18 +44,18 @@ class GetPaginatedProductsEvent extends ProductListEvent {
 }
 
 class SearchProductsEvent extends ProductListEvent {
-  final String? search;
+  final String? searchQuery;
   final bool resetPage;
   final bool resetFilters;
 
-  SearchProductsEvent({
-    this.search,
+  const SearchProductsEvent({
+    this.searchQuery,
     this.resetPage = false,
     this.resetFilters = false,
   });
 
   @override
-  List<Object?> get props => [search, resetPage, resetFilters];
+  List<Object?> get props => [searchQuery, resetPage, resetFilters];
 }
 
 class SetLoadingEvent extends ProductListEvent {
@@ -72,7 +72,7 @@ class SetCachedProductsEvent extends ProductListEvent {
   final int page;
   final int totalCount;
 
-  SetCachedProductsEvent({
+  const SetCachedProductsEvent({
     required this.products,
     required this.page,
     required this.totalCount,
@@ -88,7 +88,7 @@ class LoadMoreProductsEvent extends ProductListEvent {
   final int page;
   final int pageSize;
 
-  LoadMoreProductsEvent({required this.page, required this.pageSize});
+  const LoadMoreProductsEvent({required this.page, required this.pageSize});
 
   @override
   List<Object> get props => [page, pageSize];

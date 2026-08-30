@@ -1,9 +1,5 @@
 part of 'product_list_bloc.dart';
 
-import 'package:frontend_admin/features/products/domain/entities/paginated_products_entity.dart';
-import 'package:frontend_admin/features/products/domain/entities/product_entity.dart';
-import 'package:frontend_admin/features/products/domain/entities/product_filters_entity.dart';
-
 class ProductListState extends Equatable {
   final PaginatedProductsEntity? paginatedProducts;
   final List<ProductCategory>? categories;
@@ -78,7 +74,7 @@ class ProductListState extends Equatable {
     int? pageSize,
     bool clearError = false,
     bool clearOperationSuccess = false,
-  }){
+  }) {
     return ProductListState(
       paginatedProducts: paginatedProducts ?? this.paginatedProducts,
       categories: categories ?? this.categories,
@@ -86,7 +82,9 @@ class ProductListState extends Equatable {
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       isLoading: isLoading ?? this.isLoading,
       isOperationLoading: isOperationLoading ?? this.isOperationLoading,
-      isOperationSuccess: clearOperationSuccess ? false : (isOperationSuccess ?? this.isOperationSuccess),
+      isOperationSuccess: clearOperationSuccess
+          ? false
+          : (isOperationSuccess ?? this.isOperationSuccess),
       currentSearchQuery: currentSearchQuery ?? this.currentSearchQuery,
       currentCategoryId: currentCategoryId ?? this.currentCategoryId,
       currentStatus: currentStatus ?? this.currentStatus,
@@ -98,3 +96,5 @@ class ProductListState extends Equatable {
     );
   }
 }
+
+class ProductListInitial extends ProductListState {}
