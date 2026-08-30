@@ -9,7 +9,7 @@ import 'package:frontend_admin/features/products/domain/usecases/product_usecase
 part 'product_list_event.dart';
 part 'product_list_state.dart';
 
-class ProductListBloc extends Bloc<ProductListEvent, ProductListState> {
+class ProductsListBloc extends Bloc<ProductListEvent, ProductListState> {
   final GetProductsPaginatedUsecase getProductsPaginated;
   final BulkDeleteUsecase bulkDeleteProducts;
   final GetProductCategoriesUsecase getProductCategories;
@@ -23,7 +23,7 @@ class ProductListBloc extends Bloc<ProductListEvent, ProductListState> {
   int _currentPage = 1;
   int _pageSize = 20;
 
-  ProductListBloc({
+  ProductsListBloc({
     required this.getProductsPaginated,
     required this.bulkDeleteProducts,
     required this.getProductCategories,
