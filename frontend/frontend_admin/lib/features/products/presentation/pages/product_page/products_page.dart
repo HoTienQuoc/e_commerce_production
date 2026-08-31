@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/features/products/presentation/bloc/product_list/product_list_bloc.dart';
+import 'package:frontend_admin/features/products/presentation/pages/product_page/product_filter_dialog.dart';
+import 'package:frontend_admin/features/products/presentation/pages/product_page/product_search_bar.dart';
 import 'package:frontend_admin/features/products/presentation/pages/product_page/products_content.dart';
 import 'package:frontend_admin/features/products/presentation/pages/product_page/products_header.dart';
 

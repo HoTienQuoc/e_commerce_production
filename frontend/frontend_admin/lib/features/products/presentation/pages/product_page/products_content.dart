@@ -3,7 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/core/utils/responsive_helper.dart';
 import 'package:frontend_admin/features/products/presentation/bloc/product_list/product_list_bloc.dart';
+import 'package:frontend_admin/features/products/presentation/pages/components/product_actions_handler.dart';
+import 'package:frontend_admin/features/products/presentation/pages/product_page/product_pagination.dart';
 import 'package:frontend_admin/features/products/presentation/pages/product_page/products_empty_state.dart';
+import 'package:frontend_admin/features/products/presentation/widget/product_card.dart';
 
 class ProductsContent extends StatefulWidget {
   final bool bulkMode;
