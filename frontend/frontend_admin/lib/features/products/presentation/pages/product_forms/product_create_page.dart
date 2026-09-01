@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/features/products/presentation/bloc/product_details/product_details_bloc.dart';
+import 'package:frontend_admin/features/products/presentation/widget/product_form_widgets/product_create_form.dart';
 
 class ProductCreatePage extends StatelessWidget {
   const ProductCreatePage({super.key});
