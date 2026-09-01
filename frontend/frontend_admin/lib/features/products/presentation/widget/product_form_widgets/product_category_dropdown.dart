@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:frontend_admin/features/category/presentation/bloc/category_bloc.dart';
 
 class ProductCategoryDropdown extends StatelessWidget {
   final String? selectedCategoryId;
@@ -42,7 +43,7 @@ class ProductCategoryDropdown extends StatelessWidget {
               ),
               filled: true,
             ),
-            value: categoryExists ? selectedCategoryId : null,
+            initialValue: categoryExists ? selectedCategoryId : null,
             items: dropdownItems,
             onChanged: (value) {
               if (value != null) {
