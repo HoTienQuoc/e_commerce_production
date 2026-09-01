@@ -78,14 +78,14 @@ class ApiClient {
 
   Future<dynamic> get(
     String path, {
-    Map<String, dynamic>? queryParamters,
+    Map<String, dynamic>? queryParameters,
     Options? options,
   }) {
     final requestOptions = _createOptions(options: options);
     return _request(
       () => _dio.get(
         path,
-        queryParameters: queryParamters,
+        queryParameters: queryParameters,
         options: requestOptions,
       ),
     );
