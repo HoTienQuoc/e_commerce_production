@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
+import 'package:frontend_admin/features/products/presentation/widget/product_images/product_image_carousel.dart';
 import 'package:frontend_admin/features/products/presentation/widget/product_images/product_image_picker.dart';
+import 'package:frontend_admin/features/products/presentation/widget/product_images/product_thumbnai_row.dart';
 
 class ProductImageSection extends StatefulWidget {
   final List<String> initialImageUrls;
