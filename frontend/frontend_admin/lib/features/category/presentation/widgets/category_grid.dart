@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend_admin/core/utils/responsive_helper.dart';
 import 'package:frontend_admin/features/category/domain/entities/category_entity.dart';
+import 'package:frontend_admin/features/category/presentation/widgets/category_card.dart';
 
 class CategoryGrid extends StatefulWidget {
   final List<CategoryEntity> categories;
@@ -225,7 +226,7 @@ class _CategoryGridState extends State<CategoryGrid> {
     }
 
     return DropdownButtonFormField<String?>(
-      value: _filterByParent,
+      initialValue: _filterByParent,
       decoration: InputDecoration(
         labelText: 'Parent',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),

@@ -172,7 +172,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDatasource {
   ) async {
     final response = await client.get(
       ApiEndpoints.productList,
-      queryParamters: params,
+      queryParameters: params,
     );
     return PaginatedProductModel.fromJson(response);
   }
