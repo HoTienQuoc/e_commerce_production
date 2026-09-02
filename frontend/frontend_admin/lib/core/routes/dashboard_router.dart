@@ -3,6 +3,8 @@ import 'package:frontend_admin/core/routes/route_names.dart';
 import 'package:frontend_admin/features/auth/domain/entities/user_entity.dart';
 import 'package:frontend_admin/features/auth/presentation/pages/login_page.dart';
 import 'package:frontend_admin/features/auth/presentation/pages/manage_account_page.dart';
+import 'package:frontend_admin/features/category/presentation/pages/categories_page.dart';
+import 'package:frontend_admin/features/products/presentation/pages/product_page/products_page.dart';
 
 class DashboardRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -14,6 +16,10 @@ class DashboardRouter {
           Center(child: Text("We are in dashboard screen")),
           settings,
         );
+      case RouteNames.products:
+        return _buildRoute(const ProductsPage(), settings);
+      case RouteNames.categories:
+        return _buildRoute(const CategoriesPage(), settings);
       case RouteNames.profile:
         final user = settings.arguments as UserEntity;
         return _buildRoute(ManageAccountPage(user: user), settings);

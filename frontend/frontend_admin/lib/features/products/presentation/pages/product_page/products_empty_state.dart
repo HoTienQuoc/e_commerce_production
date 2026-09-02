@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart' show AppTheme;
 import 'package:frontend_admin/features/products/presentation/bloc/product_list/product_list_bloc.dart';
+import 'package:frontend_admin/features/products/presentation/pages/product_forms/product_create_page.dart';
 
 class ProductsEmptyState extends StatelessWidget {
   const ProductsEmptyState({super.key});
