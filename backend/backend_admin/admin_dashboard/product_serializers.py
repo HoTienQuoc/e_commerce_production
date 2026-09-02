@@ -25,7 +25,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
         if obj.image:
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(obj.image.urls)
+                return request.build_absolute_uri(obj.image.url)
             return obj.image.url
         return None
 
@@ -150,7 +150,7 @@ class ProductFullSerializer(ProductDetailSerializer):
 
     def get_variations(self, obj):
         variations = {}
-        for variation in obj.vatiation_types.all():
+        for variation in obj.variation_types.all():
             variations[variation.name] = variation.values
         if not variations:
             for variant in obj.variants.all():
@@ -187,7 +187,7 @@ class InventorySerializer(serializers.ModelSerializer):
 
 class ProductCreateSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, required=False)
-    variations = ProductVariationSerializer(many=True, required=True, source='variations_type')
+    variations = ProductVariationSerializer(many=True, required=False, source='variation_types')
     variants = ProductVariantSerializer(many=True, required=False)
     initial_stock = serializers.IntegerField(write_only=True, required=False, default=0)
     low_stock_threshold = serializers.IntegerField(required=False, allow_null=True)
