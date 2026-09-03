@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/features/products/domain/entities/product_entity.dart';
 import 'package:frontend_admin/features/products/presentation/bloc/product_details/product_details_bloc.dart';
 
@@ -49,12 +50,53 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   @override
   void dispose() {
     _productSubscription?.cancel();
+    _productSubscription = null;
     _productDetailsBloc = null;
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return BlocListener<ProductDetailsBloc, ProductDetailsState>(
+      listener: (context, state) {
+        if (state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage!, style: AppTheme.bodyMedium()),
+              backgroundColor: AppTheme.negative,
+            ),
+          );
+        } else if (state.isOperationSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "Operation Completed Successfully.",
+                style: AppTheme.bodyMedium(),
+              ),
+              backgroundColor: AppTheme.success,
+            ),
+          );
+        }
+
+        if (state.isOperationSuccess && state.product == null) {
+          Navigator.pop(context);
+        }
+      },
+      child: BlocBuilder<ProductDetailsBloc, ProductDetailsState>(
+        builder: (context, state) {
+          if (state.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                
+              ]
+            ),
+          );
+        },
+      ),
+    );
   }
 }
