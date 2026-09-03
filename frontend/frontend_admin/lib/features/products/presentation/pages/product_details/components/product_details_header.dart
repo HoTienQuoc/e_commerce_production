@@ -17,8 +17,15 @@ class ProductDetailsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container();
-    // return Padding(padding: ResponsiveHelper.getResponsivePadding(context), child: ResponsiveHelper.buildResponsiveLayout(context, mobile: _buildMobileLayout(context), tablet:, desktop: ));
+    return Padding(
+      padding: ResponsiveHelper.getResponsivePadding(context),
+      child: ResponsiveHelper.buildResponsiveLayout(
+        context,
+        mobile: _buildMobileLayout(context),
+        tablet: _buildTabletLayout(context),
+        desktop: _buildDesktopLayout(context),
+      ),
+    );
   }
 
   Widget _buildMobileLayout(BuildContext context) {
@@ -128,6 +135,64 @@ class ProductDetailsHeader extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                     vertical: AppTheme.spacingSmall,
                   ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopLayout(BuildContext context) {
+    final fontSize = ResponsiveHelper.getResponsiveFontSize(
+      context,
+      forMobile: 16,
+      forTablet: 16,
+      forDesktop: 18,
+    );
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.arrow_back),
+              iconSize: ResponsiveHelper.adaptiveFontSize(context, 24),
+            ),
+            const SizedBox(width: AppTheme.spacingSmall),
+            Text(
+              'Product Details',
+              style: AppTheme.headingMedium().copyWith(fontSize: fontSize),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            ElevatedButton.icon(
+              onPressed: onEditPressed,
+              label: const Text('Edit Product'),
+              icon: const Icon(Icons.edit),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppTheme.spacingSmall,
+                  horizontal: AppTheme.spacingMedium,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: AppTheme.spacingMedium),
+            ElevatedButton.icon(
+              onPressed: onDeletePressed,
+              label: const Text('Delete'),
+              icon: const Icon(Icons.delete),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.negative,
+                foregroundColor: AppTheme.textPrimary,
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppTheme.spacingSmall,
+                  horizontal: AppTheme.spacingMedium,
                 ),
               ),
             ),

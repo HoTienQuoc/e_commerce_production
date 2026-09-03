@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/features/products/domain/entities/product_entity.dart';
 import 'package:frontend_admin/features/products/presentation/bloc/product_details/product_details_bloc.dart';
 import 'package:frontend_admin/features/products/presentation/bloc/product_list/product_list_bloc.dart';
+import 'package:frontend_admin/features/products/presentation/pages/product_forms/product_update_page.dart';
 
 class ProductActionsHandler {
   static Future<void> navigateToEditPage(

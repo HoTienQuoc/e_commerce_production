@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/features/products/domain/entities/product_entity.dart';
 import 'package:frontend_admin/features/products/presentation/bloc/product_details/product_details_bloc.dart';
+import 'package:frontend_admin/features/products/presentation/pages/components/product_actions_handler.dart';
+import 'package:frontend_admin/features/products/presentation/pages/product_details/components/product_details_header.dart';
 
 class ProductDetailsPage extends StatefulWidget {
   final ProductEntity product;
@@ -91,12 +93,20 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                
-              ]
+                ProductDetailsHeader(
+                  product: _currentProduct,
+                  onEditPressed: _handleEditProduct,
+                  onDeletePressed: onDeletePressed,
+                ),
+              ],
             ),
           );
         },
       ),
     );
+  }
+
+  void _handleEditProduct() {
+    ProductActionsHandler.navigateToEditPage(context, _currentProduct);
   }
 }
