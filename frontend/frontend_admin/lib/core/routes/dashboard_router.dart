@@ -4,6 +4,8 @@ import 'package:frontend_admin/features/auth/domain/entities/user_entity.dart';
 import 'package:frontend_admin/features/auth/presentation/pages/login_page.dart';
 import 'package:frontend_admin/features/auth/presentation/pages/manage_account_page.dart';
 import 'package:frontend_admin/features/category/presentation/pages/categories_page.dart';
+import 'package:frontend_admin/features/products/domain/entities/product_entity.dart';
+import 'package:frontend_admin/features/products/presentation/pages/product_details/product_details_page.dart';
 import 'package:frontend_admin/features/products/presentation/pages/product_page/products_page.dart';
 
 class DashboardRouter {
@@ -20,6 +22,9 @@ class DashboardRouter {
         return _buildRoute(const ProductsPage(), settings);
       case RouteNames.categories:
         return _buildRoute(const CategoriesPage(), settings);
+      case RouteNames.productDetails:
+        final product = settings.arguments as ProductEntity;
+        return _buildRoute(ProductDetailsPage(product: product), settings);
       case RouteNames.profile:
         final user = settings.arguments as UserEntity;
         return _buildRoute(ManageAccountPage(user: user), settings);

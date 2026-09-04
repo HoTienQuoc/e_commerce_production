@@ -53,7 +53,7 @@ class ResponsiveHelper {
   static double adaptiveFontSize(
     BuildContext context,
     double size, {
-    double minsize = 12,
+    double minSize = 12,
     double maxSize = 30,
   }) {
     final deviceWidth = MediaQuery.of(context).size.width;
@@ -66,7 +66,7 @@ class ResponsiveHelper {
       scaleFactor = 1.0;
     }
     final adaptiveSize = size * scaleFactor;
-    return adaptiveSize.clamp(minsize, maxSize);
+    return adaptiveSize.clamp(minSize, maxSize);
   }
 
   static double getResponsiveWidth(

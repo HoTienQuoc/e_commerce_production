@@ -3,10 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
+import 'package:frontend_admin/core/utils/responsive_helper.dart';
 import 'package:frontend_admin/features/products/domain/entities/product_entity.dart';
 import 'package:frontend_admin/features/products/presentation/bloc/product_details/product_details_bloc.dart';
 import 'package:frontend_admin/features/products/presentation/pages/components/product_actions_handler.dart';
 import 'package:frontend_admin/features/products/presentation/pages/product_details/components/product_details_header.dart';
+import 'package:frontend_admin/features/products/presentation/pages/product_details/components/product_images_section.dart';
+import 'package:frontend_admin/features/products/presentation/pages/product_details/components/product_infor_section.dart';
 
 class ProductDetailsPage extends StatefulWidget {
   final ProductEntity product;
@@ -96,8 +99,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                 ProductDetailsHeader(
                   product: _currentProduct,
                   onEditPressed: _handleEditProduct,
-                  onDeletePressed: onDeletePressed,
+                  onDeletePressed: _handleDeleteConfirmation,
                 ),
+                _buildConstrainedContentContainer(context),
               ],
             ),
           );
@@ -108,5 +112,65 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
   void _handleEditProduct() {
     ProductActionsHandler.navigateToEditPage(context, _currentProduct);
+  }
+
+  void _handleDeleteConfirmation() {
+    ProductActionsHandler.showDeleteConfirmation(context, _currentProduct);
+  }
+
+  Widget _buildConstrainedContentContainer(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+
+    double maxContentWidth = width;
+
+    if (width >= ResponsiveHelper.largeDesktopBreakpoint) {
+      maxContentWidth = width * 0.9;
+      maxContentWidth = maxContentWidth > 1600 ? 1600 : maxContentWidth;
+    } else if (width >= ResponsiveHelper.desktopBreakpoint) {
+      maxContentWidth = width * 0.95;
+    }
+    return Center(
+      child: Container(
+        constraints: BoxConstraints(maxWidth: maxContentWidth),
+        padding: ResponsiveHelper.getSafeHorizontalPadding(context),
+        child: _buildResponsiveContent(context),
+      ),
+    );
+  }
+
+  Widget _buildResponsiveContent(BuildContext context) {
+    return ResponsiveHelper.buildResponsiveLayout(
+      context,
+      mobile: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ProductImagesSection(product: _currentProduct),
+          const SizedBox(height: AppTheme.spacingMedium),
+          ProductInfoSection(product: _currentProduct),
+        ],
+      ),
+      tablet: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ProductImagesSection(product: _currentProduct),
+          const SizedBox(height: AppTheme.spacingMedium),
+          ProductInfoSection(product: _currentProduct),
+        ],
+      ),
+      desktop: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 4,
+            child: ProductImagesSection(product: _currentProduct),
+          ),
+          const SizedBox(width: AppTheme.spacingLarge),
+          Expanded(
+            flex: 6,
+            child: ProductInfoSection(product: _currentProduct),
+          ),
+        ],
+      ),
+    );
   }
 }
