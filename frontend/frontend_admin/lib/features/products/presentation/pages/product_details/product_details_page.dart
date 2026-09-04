@@ -10,6 +10,7 @@ import 'package:frontend_admin/features/products/presentation/pages/components/p
 import 'package:frontend_admin/features/products/presentation/pages/product_details/components/product_details_header.dart';
 import 'package:frontend_admin/features/products/presentation/pages/product_details/components/product_images_section.dart';
 import 'package:frontend_admin/features/products/presentation/pages/product_details/components/product_infor_section.dart';
+import 'package:frontend_admin/features/products/presentation/pages/product_details/components/product_tabs_section.dart';
 
 class ProductDetailsPage extends StatefulWidget {
   final ProductEntity product;
@@ -102,6 +103,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                   onDeletePressed: _handleDeleteConfirmation,
                 ),
                 _buildConstrainedContentContainer(context),
+                ProductTabsSection(product: _currentProduct),
               ],
             ),
           );
