@@ -15,7 +15,7 @@ abstract class VariantRepository {
   });
 
   Future<Either<Failure, ProductVariantEntity>> updateProductVariant(
-    String productId,
+    String variantId,
     ProductVariantEntity variant, {
     dynamic variantImage,
   });
