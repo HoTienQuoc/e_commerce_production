@@ -4,11 +4,11 @@ import 'package:frontend_admin/core/usecases/usecase.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variant_entity.dart';
 import 'package:frontend_admin/features/variations/domain/repositories/variant_repository.dart';
 
-class UpdateProductVariants
+class UpdateProductVariant
     implements UseCase<ProductVariantEntity, UpdateVariantParams> {
   final VariantRepository repository;
 
-  UpdateProductVariants(this.repository);
+  UpdateProductVariant(this.repository);
 
   @override
   Future<Either<Failure, ProductVariantEntity>> call(
@@ -30,6 +30,6 @@ class UpdateVariantParams {
   UpdateVariantParams({
     required this.variantId,
     required this.variant,
-    required this.variantImage,
+    this.variantImage,
   });
 }

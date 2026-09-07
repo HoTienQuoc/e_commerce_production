@@ -21,5 +21,5 @@ class DeleteVariantParams {
   final String productId;
   final String variantId;
 
-  DeleteVariantParams(this.productId, this.variantId);
+  DeleteVariantParams({required this.productId, required this.variantId});
 }

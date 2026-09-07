@@ -9,7 +9,7 @@ class ProductVariantState extends Equatable {
   final bool isLoading;
   final bool isOperationLoading;
   final bool isOperationSuccess;
-  final List<ProductVariantEntity> variations;
+  final List<ProductVariationsEntity> variations;
   final bool isDirty;
   final String productId;
   final double basePrice;
@@ -48,7 +48,7 @@ class ProductVariantState extends Equatable {
     bool? isLoading,
     bool? isOperationLoading,
     bool? isOperationSuccess,
-    List<ProductVariation>? variations,
+    List<ProductVariationsEntity>? variations,
     bool? isDirty,
     String? productId,
     double? basePrice,
@@ -70,6 +70,9 @@ class ProductVariantState extends Equatable {
       variations: variations ?? this.variations,
       productId: productId ?? this.productId,
       basePrice: basePrice ?? this.basePrice,
+      isDirty: isDirty ?? this.isDirty,
     );
   }
 }
+
+class ProductVariantInitial extends ProductVariantState {}
