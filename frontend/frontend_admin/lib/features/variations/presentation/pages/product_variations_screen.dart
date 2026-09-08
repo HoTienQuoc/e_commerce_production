@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variant_entity.dart';
 import 'package:frontend_admin/features/variations/presentation/bloc/product_variant_bloc.dart';
+import 'package:frontend_admin/features/variations/presentation/pages/components/ui_components.dart';
 
 class ProductVariationsScreen extends StatefulWidget {
   final String productId;
@@ -104,7 +105,12 @@ class _ProductVariationsScreenState extends State<ProductVariationsScreen>
       },
       child: Scaffold(
         backgroundColor: AppTheme.backgroundDark,
-        appBar: VariationsAppBar(),
+        appBar: VariationsAppBar(
+          hasChanges: hasChanges,
+          onSave: () {},
+          onShowHelp: () {},
+          onBack: () {},
+        ),
       ),
     );
   }
