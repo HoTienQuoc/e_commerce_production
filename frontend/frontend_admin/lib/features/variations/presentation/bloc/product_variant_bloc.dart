@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/errors/failure.dart';
+import 'package:frontend_admin/core/event_bus/app_event_bus.dart';
 import 'package:frontend_admin/features/products/domain/entities/money_entity.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variant_entity.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variations_entity.dart';
@@ -403,6 +404,7 @@ class ProductVariantBloc
           if (state.variants != null) ...state.variants!,
           variant,
         ];
+        AppEventBus().fire(VariantCreatedEvent(variant));
         emit(
           state.copyWith(
             variants: updatedVariants,
@@ -444,6 +446,7 @@ class ProductVariantBloc
         final updatedVariants = state.variants?.map((v) {
           return v.id == variant.id ? variant : v;
         }).toList();
+        AppEventBus().fire(VariantUpdatedEvent(variant));
         return emit(
           state.copyWith(
             variants: updatedVariants,
@@ -485,6 +488,7 @@ class ProductVariantBloc
             ?.where((variant) => variant.id != event.variantId)
             .toList();
         final shouldClearCurrent = state.currentVariant?.id == event.variantId;
+        AppEventBus().fire(VariantDeletedEvent(event.variantId));
         return emit(
           state.copyWith(
             variants: updatedVariants,
@@ -653,6 +657,7 @@ class ProductVariantBloc
         final updatedVariants = state.variants?.map((v) {
           return v.id == updatedVariant.id ? updatedVariant : v;
         }).toList();
+        AppEventBus().fire(VariantUpdatedEvent(updatedVariants));
         emit(
           state.copyWith(
             variants: updatedVariants,
@@ -710,6 +715,7 @@ class ProductVariantBloc
         final updatedVariants = state.variants?.map((v) {
           return v.id == updatedVariant.id ? updatedVariant : v;
         }).toList();
+        AppEventBus().fire(VariantUpdatedEvent(updatedVariants));
         emit(
           state.copyWith(
             variants: updatedVariants,

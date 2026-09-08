@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/errors/failure.dart';
+import 'package:frontend_admin/core/event_bus/app_event_bus.dart';
 import 'package:frontend_admin/core/usecases/usecase.dart';
 import 'package:frontend_admin/features/products/domain/entities/paginated_products_entity.dart';
 import 'package:frontend_admin/features/products/domain/entities/product_entity.dart';
@@ -23,6 +26,8 @@ class ProductsListBloc extends Bloc<ProductListEvent, ProductListState> {
   int _currentPage = 1;
   int _pageSize = 20;
 
+  late final StreamSubscription<AppEvent> _subscription;
+
   ProductsListBloc({
     required this.getProductsPaginated,
     required this.bulkDeleteProducts,
@@ -43,6 +48,17 @@ class ProductsListBloc extends Bloc<ProductListEvent, ProductListState> {
     on<SearchProductsEvent>(_onSearchProducts);
     on<SetLoadingEvent>(_onSetLoading);
     on<ClearFiltersEvent>(_onClearFilters);
+    _subscription = AppEventBus().events.listen((event) {
+      if (event is ProductCreatedEvent ||
+          event is ProductUpdatedEvent ||
+          event is VariantCreatedEvent ||
+          event is VariantUpdatedEvent ||
+          event is VariantDeletedEvent) {
+        refreshProductList(bypassCache: true);
+      } else if (event is ProductRemovedEvent) {
+        add(ProductDeletedEvent(productId: event.productId));
+      }
+    });
   }
 
   void refreshProductList({bool bypassCache = true}) {

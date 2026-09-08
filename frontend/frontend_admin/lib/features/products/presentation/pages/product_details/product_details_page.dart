@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:frontend_admin/core/event_bus/app_event_bus.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/core/utils/responsive_helper.dart';
 import 'package:frontend_admin/features/products/domain/entities/product_entity.dart';
@@ -23,7 +24,7 @@ class ProductDetailsPage extends StatefulWidget {
 
 class _ProductDetailsPageState extends State<ProductDetailsPage> {
   late ProductEntity _currentProduct;
-  StreamSubscription<_ProductDetailsPageState>? _productSubscription;
+  StreamSubscription<ProductDetailsState>? _productSubscription;
   ProductDetailsBloc? _productDetailsBloc;
 
   @override
@@ -38,9 +39,26 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     _productDetailsBloc = BlocProvider.of<ProductDetailsBloc>(context);
 
     if (_productDetailsBloc == null) {
-      // _setupBlocListener();
+      _setupBlocListener();
       _loadProductDetails();
+      _setupEventBusListener();
     }
+  }
+
+  StreamSubscription<AppEvent>? _eventBusSubscription;
+
+  void _setupEventBusListener() {
+    _eventBusSubscription = AppEventBus().events.listen((event) {
+      if (event is ProductUpdatedEvent &&
+          event.product.id == _currentProduct.id) {
+        setState(() {
+          _currentProduct = event.product;
+        });
+      } else if (event is ProductRemovedEvent &&
+          event.productId == _currentProduct.id) {
+        Navigator.pop(context);
+      }
+    });
   }
 
   void _loadProductDetails() {
@@ -49,9 +67,19 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     }
   }
 
-  // void _setupBlocListener() {
-  //   if (event is Product)
-  // }
+  void _setupBlocListener() {
+    if (_productDetailsBloc != null) {
+      _productSubscription = _productDetailsBloc!.stream.listen((state) {
+        if (state.product != null && state.product!.id == widget.product.id) {
+          if (mounted) {
+            setState(() {
+              _currentProduct = state.product!;
+            });
+          }
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {

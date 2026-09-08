@@ -1,9 +1,11 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/errors/failure.dart';
+import 'package:frontend_admin/core/event_bus/app_event_bus.dart';
 import 'package:frontend_admin/features/products/domain/entities/money_entity.dart';
 import 'package:frontend_admin/features/products/domain/entities/product_entity.dart';
 import 'package:frontend_admin/features/products/domain/usecases/product_usecase.dart';
+import 'package:frontend_admin/features/products/presentation/bloc/product_list/product_list_bloc.dart';
 
 part 'product_details_event.dart';
 part 'product_details_state.dart';
@@ -84,13 +86,16 @@ class ProductDetailsBloc
           isOperationLoading: false,
         ),
       ),
-      (product) => emit(
-        state.copyWith(
-          product: product,
-          isOperationLoading: false,
-          isOperationSuccess: true,
-        ),
-      ),
+      (product) {
+        AppEventBus().fire(ProductCreatedEvent(product));
+        emit(
+          state.copyWith(
+            product: product,
+            isOperationLoading: false,
+            isOperationSuccess: true,
+          ),
+        );
+      },
     );
   }
 
@@ -119,6 +124,7 @@ class ProductDetailsBloc
           ),
         ),
         (product) {
+          AppEventBus().fire(ProductUpdatedEvent(product));
           emit(
             state.copyWith(
               product: product,
@@ -158,14 +164,17 @@ class ProductDetailsBloc
           isOperationLoading: false,
         ),
       ),
-      (success) => emit(
-        state.copyWith(
-          product: null,
-          isOperationLoading: false,
-          isOperationSuccess: true,
-          isDeleted: true,
-        ),
-      ),
+      (success) {
+        AppEventBus().fire(ProductRemovedEvent(event.productId));
+        emit(
+          state.copyWith(
+            product: null,
+            isOperationLoading: false,
+            isOperationSuccess: true,
+            isDeleted: true,
+          ),
+        );
+      },
     );
   }
 
@@ -199,6 +208,7 @@ class ProductDetailsBloc
       (success) {
         if (state.product?.id == event.id) {
           final updatedProduct = state.product!.copyWith(stock: event.newStock);
+          AppEventBus().fire(ProductUpdatedEvent(updatedProduct));
           emit(
             state.copyWith(
               product: updatedProduct,
@@ -250,6 +260,7 @@ class ProductDetailsBloc
                 ? MoneyEntity(value: event.discountPrice!)
                 : state.product!.discountPrice,
           );
+          AppEventBus().fire(ProductUpdatedEvent(updatedProduct));
           emit(
             state.copyWith(
               product: updatedProduct,
@@ -296,6 +307,7 @@ class ProductDetailsBloc
         ),
       ),
       (updatedProduct) {
+        AppEventBus().fire(ProductUpdatedEvent(updatedProduct));
         emit(
           state.copyWith(
             product: updatedProduct,
