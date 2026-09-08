@@ -72,10 +72,10 @@ class RemoveVariationValueEvent extends ProductVariantEvent {
 }
 
 // Updates the values for the 'Size' variation
-class UpdateSizeDefinitionEvent extends ProductVariantEvent {
+class UpdateSizesDefinitionEvent extends ProductVariantEvent {
   final List<String> sizes;
 
-  const UpdateSizeDefinitionEvent(this.sizes);
+  const UpdateSizesDefinitionEvent(this.sizes);
 
   @override
   List<Object?> get props => [sizes];

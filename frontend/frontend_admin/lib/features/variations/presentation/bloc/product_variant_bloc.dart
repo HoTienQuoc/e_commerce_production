@@ -33,7 +33,30 @@ class ProductVariantBloc
     required this.deleteProductVariant,
     required this.manageProductVariants,
     required this.distributeProductStockUseCase,
-  }) : super(ProductVariantInitial()) {}
+  }) : super(ProductVariantInitial()) {
+    on<InitializeVariationsDataEvent>(_onInitializeVariationsData);
+    on<AddVariationDefinitionEvent>(_onAddVariationDefinition);
+    on<RemoveVariationDefinitionEvent>(_onRemoveVariationDefinition);
+    on<RemoveVariationValueEvent>(_onRemoveVariationValue);
+    on<UpdateSizesDefinitionEvent>(_onUpdateSizesDefinition);
+    on<LocalVariantsUpdatedEvent>(_onLocalVariantsUpdated);
+    on<SaveVariationsEvent>(_onSaveVariations);
+    on<DistributeStockAcrossVariantsEvent>(_onDistributeStockAcrossVariants);
+
+    on<GetProductVariantsEvent>(_onGetProductVariants);
+    on<GetVariantByIdEvent>(_onGetVariantById);
+    on<CreateProductVariantEvent>(_onCreateProductVariant);
+    on<UpdateProductVariantEvent>(_onUpdateProductVariant);
+    on<DeleteProductVariantEvent>(_onDeleteProductVariant);
+    on<ManageProductVariantEvent>(_onManageProductVariants);
+    on<UpdateVariantStockEvent>(_onUpdateVariantStock);
+    on<UpdateVariantPriceEvent>(_onUpdateVariantPrice);
+    on<ClearVariantErrorEvent>(_onClearVariantError);
+    on<ClearVariantOperationSuccessEvent>(_onClearOperationSuccess);
+    on<ResetVariantStateEvent>(_onResetVariantState);
+    on<DistributeProductStockEvent>(_onDistributeProductStock);
+    on<BatchUpdateDiscountsEvent>(_onBatchUpdateDiscounts);
+  }
 
   void _onInitializeVariationsData(
     InitializeVariationsDataEvent event,
@@ -162,7 +185,7 @@ class ProductVariantBloc
   }
 
   void _onUpdateSizesDefinition(
-    UpdateSizeDefinitionEvent event,
+    UpdateSizesDefinitionEvent event,
     Emitter<ProductVariantState> emit,
   ) {
     final sizeIndex = state.variations.indexWhere(
@@ -202,7 +225,7 @@ class ProductVariantBloc
   }
 
   void _onDistributeStockAcrossVariants(
-    DistributeProductStockEvent event,
+    DistributeStockAcrossVariantsEvent event,
     Emitter<ProductVariantState> emit,
   ) {
     if (state.variants == null || state.variants!.isEmpty) return;
@@ -642,6 +665,86 @@ class ProductVariantBloc
         );
       },
     );
+  }
+
+  Future<void> _onUpdateVariantPrice(
+    UpdateVariantPriceEvent event,
+    Emitter<ProductVariantState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        isOperationLoading: true,
+        clearError: true,
+        clearOperationSuccess: true,
+      ),
+    );
+    final variant = state.variants
+        ?.where((v) => v.id == event.variantId)
+        .firstOrNull;
+    if (variant == null) {
+      emit(
+        state.copyWith(
+          errorMessage: 'Variant not found',
+          isOperationLoading: false,
+        ),
+      );
+      return;
+    }
+    final updatedVariant = variant.copyWith(
+      price: MoneyEntity(value: event.price),
+      discountPrice: event.discountPrice != null
+          ? MoneyEntity(value: event.discountPrice!)
+          : variant.discountPrice,
+    );
+    final result = await updateProductVariant(
+      UpdateVariantParams(variantId: event.variantId, variant: updatedVariant),
+    );
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          errorMessage: _mapFailureToMessage(failure),
+          isOperationLoading: false,
+        ),
+      ),
+      (updatedVariant) {
+        final updatedVariants = state.variants?.map((v) {
+          return v.id == updatedVariant.id ? updatedVariant : v;
+        }).toList();
+        emit(
+          state.copyWith(
+            variants: updatedVariants,
+            currentVariant: state.currentVariant?.id == event.variantId
+                ? updatedVariant
+                : state.currentVariant,
+            isOperationLoading: false,
+            isOperationSuccess: true,
+          ),
+        );
+      },
+    );
+  }
+
+  void _onClearVariantError(
+    ClearVariantErrorEvent event,
+    Emitter<ProductVariantState> emit,
+  ) async {
+    emit(state.copyWith(clearError: true));
+  }
+
+  void _onClearOperationSuccess(
+    ClearVariantOperationSuccessEvent event,
+    Emitter<ProductVariantState> emit,
+  ) {
+    if (state.isOperationSuccess) {
+      emit(state.copyWith(clearOperationSuccess: true));
+    }
+  }
+
+  void _onResetVariantState(
+    ResetVariantStateEvent event,
+    Emitter<ProductVariantState> emit,
+  ) {
+    emit(const ProductVariantState());
   }
 
   // ---HELPER METHODS---
