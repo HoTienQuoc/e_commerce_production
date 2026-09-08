@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variant_entity.dart';
 import 'package:frontend_admin/features/variations/presentation/bloc/product_variant_bloc.dart';
 
@@ -45,7 +46,7 @@ class _ProductVariationsScreenState extends State<ProductVariationsScreen>
       ),
     );
     _animationController = AnimationController(
-      duration: const Duration(microseconds: 600),
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
     _fadeAnimation = CurvedAnimation(
@@ -61,10 +62,50 @@ class _ProductVariationsScreenState extends State<ProductVariationsScreen>
     super.dispose();
   }
 
+  Future<bool> _confirmDiscard() async {
+    if (!context.read<ProductVariantBloc>().state.isDirty) return true;
+    final result = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Discard Changes?', style: AppTheme.headingMedium()),
+        content: Text(
+          'You have unsaved changes. Are you sure you want to leave?',
+          style: AppTheme.bodyMedium(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('CANCEL'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.negative),
+            child: const Text('DISCARD', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
   bool isSavingDialogShowing = false;
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    final blocState = context.watch<ProductVariantBloc>().state;
+    final bool hasChanges = blocState.isDirty;
+    final bool isLoading = blocState.isOperationLoading;
+    return PopScope(
+      canPop: !hasChanges,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final shouldPop = await _confirmDiscard();
+        if (shouldPop && mounted) Navigator.of(context).pop();
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.backgroundDark,
+        appBar: VariationsAppBar(),
+      ),
+    );
   }
 }

@@ -60,7 +60,7 @@ class ProductFilterService(BaseService):
         if category_id:
             try:
                 # Strategy 1: Direct UUID matching (case insensitive)
-                queryset = queryset.filter(Category__id__iexact = category_id)
+                queryset = queryset.filter(category__id__iexact = category_id)
 
                 # Strategy 2: String-based exact matching if no results
                 if not queryset.exists():
