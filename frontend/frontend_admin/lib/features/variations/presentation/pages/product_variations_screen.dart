@@ -180,6 +180,8 @@ class _ProductVariationsScreenState extends State<ProductVariationsScreen>
                           GetProductVariantsEvent(widget.productId),
                         ),
                       ),
+                      const SizedBox(height: AppTheme.spacingMedium),
+                      VariationsCard(),
                     ],
                   ),
                 ),

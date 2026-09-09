@@ -156,3 +156,195 @@ class VariationsHeader extends StatelessWidget {
     );
   }
 }
+
+// Main card containing variation functionality
+class VariationsCard extends StatelessWidget {
+  final String productId;
+  final double basePrice;
+  final int currentStock;
+
+  const VariationsCard({
+    super.key,
+    required this.productId,
+    required this.basePrice,
+    required this.currentStock,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ProductVariantBloc, ProductVariantState>(
+      builder: (context, state) {
+        final variants = state.variants ?? [];
+        return Card(
+          elevation: 4,
+          color: AppTheme.cardBackground,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(AppTheme.spacingLarge),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionHeader(context),
+                Divider(height: 32, color: AppTheme.dividerColor),
+                StatusOverview(
+                  totalVariants: variants.length,
+                  inStockVariants: variants.where((v) => v.stock > 0).length,
+                  basePrice: basePrice,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppTheme.spacingSmall),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryLight.withAlpha((0.2 * 255).round()),
+                borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+              ),
+              child: Icon(Icons.category, color: AppTheme.textPrimary),
+            ),
+            const SizedBox(width: AppTheme.spacingSmall),
+            Text(
+              'Product Variations',
+              style: AppTheme.headingMedium().copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppTheme.spacingSmall),
+        Text(
+          'Create and manage different variations of your product such as size, color, material, etc. Each variation combination will create a unique product variant with its own price, stock and SKU.',
+          style: AppTheme.bodyMedium().copyWith(color: AppTheme.textSecondary),
+        ),
+      ],
+    );
+  }
+}
+
+class StatusOverview extends StatelessWidget {
+  final int totalVariants;
+  final int inStockVariants;
+  final double basePrice;
+  const StatusOverview({
+    super.key,
+    required this.totalVariants,
+    required this.inStockVariants,
+    required this.basePrice,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacingMedium),
+      decoration: BoxDecoration(
+        color: AppTheme.backgroundMedium,
+        borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+        border: Border.all(color: AppTheme.dividerColor),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isSmallScreen = constraints.maxWidth < 600;
+          final statusCards = [
+            _buildStatusCard(
+              title: 'Total Variants',
+              value: totalVariants.toString(),
+              icon: Icons.grid_view,
+              iconColor: AppTheme.primaryLight,
+              isSmallScreen: isSmallScreen,
+            ),
+            _buildStatusCard(
+              title: 'In Stock',
+              value: inStockVariants.toString(),
+              icon: Icons.inventory,
+              iconColor: AppTheme.positive,
+              isSmallScreen: isSmallScreen,
+            ),
+            _buildStatusCard(
+              title: 'Out of Stock',
+              value: (totalVariants - inStockVariants).toString(),
+              icon: Icons.inventory_2_outlined,
+              iconColor: AppTheme.negative,
+              isSmallScreen: isSmallScreen,
+            ),
+            _buildStatusCard(
+              title: 'Base Price',
+              value: '\$${basePrice.toStringAsFixed(2)}',
+              icon: Icons.attach_money,
+              iconColor: AppTheme.warning,
+              isSmallScreen: isSmallScreen,
+            ),
+          ];
+          if (isSmallScreen) {
+            return Wrap(
+              spacing: AppTheme.spacingMedium,
+              runSpacing: AppTheme.spacingMedium,
+              alignment: WrapAlignment.spaceAround,
+              children: statusCards,
+            );
+          } else {
+            return Row(
+              children: statusCards
+                  .map((card) => Expanded(child: card))
+                  .toList(),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildStatusCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color iconColor,
+    required bool isSmallScreen,
+  }) {
+    return Card(
+      elevation: 0,
+      color: Colors.transparent,
+      child: Container(
+        width: isSmallScreen ? 150 : null,
+        padding: const EdgeInsets.all(AppTheme.spacingSmall),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: iconColor, size: 20),
+                SizedBox(width: AppTheme.spacingSmall),
+                Text(
+                  title,
+                  style: AppTheme.bodyMedium().copyWith(
+                    color: AppTheme.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: AppTheme.spacingSmall),
+            Text(
+              value,
+              style: AppTheme.headingLarge().copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
