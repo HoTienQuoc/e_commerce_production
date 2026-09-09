@@ -33,6 +33,7 @@ class _ProductVariationsScreenState extends State<ProductVariationsScreen>
   late final AnimationController _animationController;
   late final Animation<double> _fadeAnimation;
   final _formKey = GlobalKey<FormState>();
+  bool _isSavingDialogShowing = false;
 
   @override
   void initState() {
@@ -89,7 +90,52 @@ class _ProductVariationsScreenState extends State<ProductVariationsScreen>
     return result ?? false;
   }
 
-  bool isSavingDialogShowing = false;
+  Future<void> _saveChanges() async {
+    final bloc = context.read<ProductVariantBloc>();
+    if (bloc.state.isOperationLoading) return;
+    if (_formKey.currentState?.validate() ?? false) {
+      _formKey.currentState?.save();
+      bloc.add(SaveVariationsEvent());
+    }
+  }
+
+  void _handleBlocState(BuildContext context, ProductVariantState state) {
+    if (_isSavingDialogShowing &&
+        !state.isOperationLoading &&
+        (state.isOperationSuccess || state.errorMessage != null)) {}
+    // show success message
+    if (state.isOperationSuccess) {
+      _showNotification('Variations saved successfully!');
+      context.read<ProductVariantBloc>().add(
+        ClearVariantOperationSuccessEvent(),
+      );
+    }
+    // Show error message
+    else if (state.errorMessage != null) {
+      _showNotification('Error: ${state.errorMessage}', isError: true);
+      context.read<ProductVariantBloc>().add(ClearVariantErrorEvent());
+    }
+  }
+
+  void _showNotification(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_outline : Icons.check_circle_outline,
+              color: Colors.white,
+            ),
+            const SizedBox(width: AppTheme.spacingSmall),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: isError ? AppTheme.negative : AppTheme.positive,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,9 +153,33 @@ class _ProductVariationsScreenState extends State<ProductVariationsScreen>
         backgroundColor: AppTheme.backgroundDark,
         appBar: VariationsAppBar(
           hasChanges: hasChanges,
-          onSave: () {},
-          onShowHelp: () {},
-          onBack: () {},
+          onSave: _saveChanges,
+          onShowHelp: () {
+            /* Implement help dialog if needed */
+          },
+          onBack: () async {
+            final shouldPop = await _confirmDiscard();
+            if (shouldPop && mounted) Navigator.of(context).pop();
+          },
+        ),
+        body: BlocListener<ProductVariantBloc, ProductVariantState>(
+          listener: _handleBlocState,
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: Container(
+              color: AppTheme.backgroundDark,
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(AppTheme.spacingLarge),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [VariationsHeader()],
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
