@@ -174,7 +174,13 @@ class _ProductVariationsScreenState extends State<ProductVariationsScreen>
                   padding: const EdgeInsets.all(AppTheme.spacingLarge),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [VariationsHeader()],
+                    children: [
+                      VariationsHeader(
+                        onRefresh: () => context.read<ProductVariantBloc>().add(
+                          GetProductVariantsEvent(widget.productId),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
