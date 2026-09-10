@@ -181,7 +181,11 @@ class _ProductVariationsScreenState extends State<ProductVariationsScreen>
                         ),
                       ),
                       const SizedBox(height: AppTheme.spacingMedium),
-                      VariationsCard(),
+                      VariationsCard(
+                        productId: '',
+                        basePrice: null,
+                        currentStock: null,
+                      ),
                     ],
                   ),
                 ),

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variant_entity.dart';
+import 'package:frontend_admin/features/variations/domain/entities/product_variations_entity.dart';
 import 'package:frontend_admin/features/variations/presentation/bloc/product_variant_bloc.dart';
+import 'package:frontend_admin/features/variations/presentation/widgets/product_sizes_section.dart';
 
 class ProductVariationsManager extends StatefulWidget {
   final String productId;
@@ -98,6 +100,25 @@ class _ProductVariationsManagerState extends State<ProductVariationsManager> {
                 ),
               ),
             ),
+            if (_showSizesSection) ...[
+              ProductSizesSection(
+                initialSizes: variations
+                    .firstWhere(
+                      (v) => v.name.toLowerCase() == 'size',
+                      orElse: () => const ProductVariationsEntity(
+                        id: '',
+                        name: '',
+                        values: [],
+                      ),
+                    )
+                    .values,
+                onSizesChanged: (sizes) {
+                  context.read<ProductVariantBloc>().add(
+                    UpdateSizesDefinitionEvent(sizes),
+                  );
+                },
+              ),
+            ],
           ],
         );
       },
