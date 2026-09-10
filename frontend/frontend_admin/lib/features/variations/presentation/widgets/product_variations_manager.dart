@@ -118,10 +118,66 @@ class _ProductVariationsManagerState extends State<ProductVariationsManager> {
                   );
                 },
               ),
+              SizedBox(height: AppTheme.spacingLarge),
+              Divider(color: AppTheme.dividerColor),
+              SizedBox(height: AppTheme.spacingMedium),
             ],
+            _buildVariationsHeader(
+              context,
+              state.isDirty,
+              variations.isNotEmpty,
+            ),
+            SizedBox(height: AppTheme.spacingSmall),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildVariationsHeader(
+    BuildContext context,
+    bool isDirty,
+    bool hasVariations,
+  ) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Flexible(
+          child: Text(
+            'Product Variations',
+            style: AppTheme.headingMedium(),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        Row(
+          children: [
+            if (hasVariations)
+              TextButton.icon(
+                onPressed: () =>
+                    setState(() => _showCombinations = !_showCombinations),
+                label: Text(_showCombinations ? 'Hide' : 'Show'),
+                icon: Icon(
+                  _showCombinations ? Icons.visibility_off : Icons.visibility,
+                  color: AppTheme.textPrimary,
+                  size: 20,
+                ),
+              ),
+            if (isDirty)
+              TextButton.icon(
+                onPressed: () => context.read<ProductVariantBloc>().add(
+                  SaveVariationsEvent(),
+                ),
+                label: Text(
+                  'Save Variations',
+                  style: AppTheme.bodyMedium().copyWith(
+                    color: AppTheme.accentGreen,
+                  ),
+                ),
+                icon: Icon(Icons.save, color: AppTheme.accentBlue, size: 20),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }
