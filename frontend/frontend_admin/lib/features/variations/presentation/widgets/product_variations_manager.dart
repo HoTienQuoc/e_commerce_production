@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
+import 'package:frontend_admin/features/category/presentation/widgets/add_category_dialog.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variant_entity.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variations_entity.dart';
 import 'package:frontend_admin/features/variations/presentation/bloc/product_variant_bloc.dart';
+import 'package:frontend_admin/features/variations/presentation/widgets/add_variation_dialog.dart';
 import 'package:frontend_admin/features/variations/presentation/widgets/product_sizes_section.dart';
+import 'package:frontend_admin/features/variations/presentation/widgets/variation_list_section.dart';
 
 class ProductVariationsManager extends StatefulWidget {
   final String productId;
@@ -128,9 +131,45 @@ class _ProductVariationsManagerState extends State<ProductVariationsManager> {
               variations.isNotEmpty,
             ),
             SizedBox(height: AppTheme.spacingSmall),
+            VariationListSection(
+              variations: variations,
+              showSizesSection: _showSizesSection,
+              onRemoveVariation: (variation) {
+                context.read<ProductVariantBloc>().add(
+                  RemoveVariationDefinitionEvent(variation),
+                );
+              },
+              onRemoveVariationValue: (variation, value) {
+                context.read<ProductVariantBloc>().add(
+                  RemoveVariationValueEvent(variation: variation, value: value),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => _showAddVariationDialog(context),
+                  label: label,
+                ),
+              ],
+            ),
           ],
         );
       },
+    );
+  }
+
+  void _showAddVariationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AddVariationDialog(
+        onAddVariation: (name, values) {
+          context.read<ProductVariantBloc>().add(
+            AddVariationDefinitionEvent(name: name, values: values),
+          );
+        },
+      ),
     );
   }
 
