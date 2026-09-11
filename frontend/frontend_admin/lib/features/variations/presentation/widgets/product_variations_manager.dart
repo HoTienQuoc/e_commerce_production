@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
-import 'package:frontend_admin/features/category/presentation/widgets/add_category_dialog.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variant_entity.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variations_entity.dart';
 import 'package:frontend_admin/features/variations/presentation/bloc/product_variant_bloc.dart';
 import 'package:frontend_admin/features/variations/presentation/widgets/add_variation_dialog.dart';
 import 'package:frontend_admin/features/variations/presentation/widgets/product_sizes_section.dart';
+import 'package:frontend_admin/features/variations/presentation/widgets/update_stock_dialog.dart';
 import 'package:frontend_admin/features/variations/presentation/widgets/variation_list_section.dart';
 
 class ProductVariationsManager extends StatefulWidget {
@@ -150,13 +150,40 @@ class _ProductVariationsManagerState extends State<ProductVariationsManager> {
               children: [
                 ElevatedButton.icon(
                   onPressed: () => _showAddVariationDialog(context),
-                  label: label,
+                  label: const Text('Add Variation Type'),
+                  icon: const Icon(
+                    Icons.add_circle_outline,
+                    color: AppTheme.accentIvory,
+                  ),
+                  style: _buttonStyle(),
                 ),
+                const SizedBox(width: 16),
+                ElevatedButton.icon(onPressed: variants.isNotEmpty ? () => _showUpdateStockDialog(context) : ,label: ,)
               ],
             ),
           ],
         );
       },
+    );
+  }
+
+  ButtonStyle _buttonStyle({bool primary = false}) {
+    return ElevatedButton.styleFrom(
+      backgroundColor: primary
+          ? AppTheme.accentBlue
+          : AppTheme.accentBlue.withAlpha((0.1 * 255).round()),
+      foregroundColor: primary ? AppTheme.textPrimary : AppTheme.accentSilver,
+      elevation: 0,
+      padding: EdgeInsets.symmetric(
+        horizontal: AppTheme.spacingLarge,
+        vertical: AppTheme.spacingMedium,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: primary
+            ? BorderSide.none
+            : BorderSide(color: AppTheme.primaryLight, width: 1.5),
+      ),
     );
   }
 
@@ -171,6 +198,10 @@ class _ProductVariationsManagerState extends State<ProductVariationsManager> {
         },
       ),
     );
+  }
+
+  void _showUpdateStockDialog(BuildContext context, int currentTotalStock){
+    showDialog(context: context, builder: (_) => UpdateStockDialog());
   }
 
   Widget _buildVariationsHeader(
