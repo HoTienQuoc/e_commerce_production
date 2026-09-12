@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variant_entity.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variations_entity.dart';
+import 'package:frontend_admin/features/variations/presentation/bloc/product_variant_bloc.dart';
+import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/stock_warning_banner.dart';
+import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/variation_filters.dart';
+import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/variation_table_header.dart';
 
 class VariationCombinationsTable extends StatefulWidget {
   final List<ProductVariationsEntity> variations;
@@ -99,7 +104,39 @@ class _VariationCombinationsTableState
           children: [
             // Stock discepancy warning
             if (stockDifference != 0)
-              
+              StockWarningBanner(
+                stockDifference: stockDifference,
+                onDistributeStock: () => context.read<ProductVariantBloc>().add(
+                  DistributeStockAcrossVariantsEvent(widget.currentStock),
+                ),
+              ),
+
+            // Filters
+            VariationFilters(
+              availableSizes: _availableSizes,
+              availableColors: _availableColors,
+              selectedColor: _selectedColor,
+              selectedSize: _selectedSize,
+              onSizeChanged: (size) {
+                setState(() {
+                  _selectedSize = size;
+                });
+              },
+              onColorChanged: (color) {
+                setState(() {
+                  _selectedColor = color;
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+            VariationTableHeader(
+              totalStock: _totalLocalStock,
+              currentStock: widget.currentStock,
+              onGenerateSkus: () {},
+              onShowStockDistribution: () {},
+              onShowBatchPriceUpdate: () {},
+              onShowBatchDiscount: () {},
+            ),
           ],
         ),
       ),
