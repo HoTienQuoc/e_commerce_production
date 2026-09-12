@@ -187,6 +187,15 @@ class _ProductVariationsScreenState extends State<ProductVariationsScreen>
                         currentStock: widget.currentStock,
                       ),
                       const SizedBox(height: AppTheme.spacingLarge),
+                      BottomActionsBar(
+                        hasChanges: hasChanges,
+                        onSave: _saveChanges,
+                        onCancel: () async {
+                          final shouldPop = await _confirmDiscard();
+                          if (shouldPop && mounted) Navigator.of(context).pop();
+                        },
+                        isLoading: isLoading,
+                      ),
                     ],
                   ),
                 ),
@@ -194,6 +203,22 @@ class _ProductVariationsScreenState extends State<ProductVariationsScreen>
             ),
           ),
         ),
+        floatingActionButton: hasChanges
+            ? FloatingActionButton(
+                onPressed: isLoading ? null : _saveChanges,
+                backgroundColor: AppTheme.accentGreen,
+                child: isLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppTheme.textPrimary,
+                        ),
+                      )
+                    : const Icon(Icons.save),
+              )
+            : null,
       ),
     );
   }

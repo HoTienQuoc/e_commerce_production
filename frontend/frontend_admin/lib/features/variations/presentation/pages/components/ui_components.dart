@@ -412,6 +412,29 @@ class BottomActionsBar extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
+            icon: isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppTheme.textPrimary,
+                    ),
+                  )
+                : const Icon(Icons.save),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryLight,
+              foregroundColor: AppTheme.textPrimary,
+              disabledBackgroundColor: AppTheme.accentSilver,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.spacingLarge,
+                vertical: AppTheme.spacingMedium,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+              ),
+              elevation: 2,
+            ),
           ),
         ],
       ),

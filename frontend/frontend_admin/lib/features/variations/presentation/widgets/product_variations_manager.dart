@@ -171,10 +171,30 @@ class _ProductVariationsManagerState extends State<ProductVariationsManager> {
                 ),
               ],
             ),
+            _buildStatusIndicator(state),
+            if (_showCombinations && variations.isNotEmpty) ...[
+              SizedBox(height: AppTheme.spacingLarge),
+              Divider(color: AppTheme.dividerColor),
+              SizedBox(height: AppTheme.spacingMedium),
+              Text('Variation Combinations', style: AppTheme.headingMedium()),
+              SizedBox(height: AppTheme.spacingMedium),
+            ],
           ],
         );
       },
     );
+  }
+
+  Widget _buildStatusIndicator(ProductVariantState state) {
+    if (state.isOperationLoading || state.isLoading) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: AppTheme.spacingMedium),
+        child: Center(
+          child: CircularProgressIndicator(color: AppTheme.accentIvory),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   ButtonStyle _buttonStyle({bool primary = false}) {
