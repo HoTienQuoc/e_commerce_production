@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/features/variations/presentation/bloc/product_variant_bloc.dart';
+import 'package:frontend_admin/features/variations/presentation/widgets/product_variations_manager.dart';
 
 class VariationsAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool hasChanges;
@@ -193,6 +194,12 @@ class VariationsCard extends StatelessWidget {
                   inStockVariants: variants.where((v) => v.stock > 0).length,
                   basePrice: basePrice,
                 ),
+                const SizedBox(height: AppTheme.spacingMedium),
+                ProductVariationsManager(
+                  productId: productId,
+                  basePrice: basePrice,
+                  currentStock: currentStock,
+                ),
               ],
             ),
           ),
@@ -344,6 +351,69 @@ class StatusOverview extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class BottomActionsBar extends StatelessWidget {
+  final bool hasChanges;
+  final VoidCallback onSave;
+  final VoidCallback onCancel;
+  final bool isLoading;
+
+  const BottomActionsBar({
+    super.key,
+    required this.hasChanges,
+    required this.onSave,
+    required this.onCancel,
+    this.isLoading = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacingMedium),
+      decoration: BoxDecoration(
+        color: AppTheme.cardBackground,
+        borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha((0.05 * 255).round()),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          OutlinedButton.icon(
+            onPressed: onCancel,
+            label: Text('Cancel', style: AppTheme.bodyMedium()),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: AppTheme.borderColor),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.spacingMedium,
+                vertical: AppTheme.spacingSmall,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+              ),
+            ),
+          ),
+          const SizedBox(width: AppTheme.spacingMedium),
+          ElevatedButton.icon(
+            onPressed: hasChanges && !isLoading ? onSave : null,
+            label: Text(
+              'Save Variations',
+              style: AppTheme.bodyMedium().copyWith(
+                color: AppTheme.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

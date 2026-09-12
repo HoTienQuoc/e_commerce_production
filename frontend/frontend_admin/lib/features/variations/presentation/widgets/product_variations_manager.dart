@@ -158,7 +158,17 @@ class _ProductVariationsManagerState extends State<ProductVariationsManager> {
                   style: _buttonStyle(),
                 ),
                 const SizedBox(width: 16),
-                ElevatedButton.icon(onPressed: variants.isNotEmpty ? () => _showUpdateStockDialog(context) : ,label: ,)
+                ElevatedButton.icon(
+                  onPressed: variants.isNotEmpty
+                      ? () => _showUpdateStockDialog(
+                          context,
+                          totalStockFromVariants,
+                        )
+                      : null,
+                  label: const Text('Distribute Stock'),
+                  icon: const Icon(Icons.sync_alt, color: AppTheme.textPrimary),
+                  style: _buttonStyle(primary: true),
+                ),
               ],
             ),
           ],
@@ -200,8 +210,18 @@ class _ProductVariationsManagerState extends State<ProductVariationsManager> {
     );
   }
 
-  void _showUpdateStockDialog(BuildContext context, int currentTotalStock){
-    showDialog(context: context, builder: (_) => UpdateStockDialog());
+  void _showUpdateStockDialog(BuildContext context, int currentTotalStock) {
+    showDialog(
+      context: context,
+      builder: (_) => UpdateStockDialog(
+        currentStock: currentTotalStock,
+        onUpdateStock: (newStock) {
+          context.read<ProductVariantBloc>().add(
+            DistributeStockAcrossVariantsEvent(newStock),
+          );
+        },
+      ),
+    );
   }
 
   Widget _buildVariationsHeader(
