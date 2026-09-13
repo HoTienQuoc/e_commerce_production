@@ -1,9 +1,13 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
+import 'package:frontend_admin/features/products/domain/entities/money_entity.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variant_entity.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variations_entity.dart';
 import 'package:frontend_admin/features/variations/presentation/bloc/product_variant_bloc.dart';
+import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/batch_actions_dialog.dart';
 import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/stock_warning_banner.dart';
 import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/variation_filters.dart';
 import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/variation_table_header.dart';
@@ -85,6 +89,61 @@ class _VariationCombinationsTableState
     }).toList();
   }
 
+  void _generateSkus() {
+    setState(() {
+      _localVariants = _localVariants.map((variant) {
+        final attributesStr = variant.attributes.entries
+            .map((e) => e.value.substring(0, min(2, e.value.length)))
+            .join('');
+        final sku =
+            'SKU-${attributesStr.toUpperCase()}-${variant.id.substring(0, 4)}';
+        return variant.copyWith(sku: sku);
+      }).toList();
+      widget.onVariantsChanged(_localVariants);
+    });
+  }
+
+  void _distributeStock(int totalStock) {
+    if (_localVariants.isEmpty || totalStock < 0) return;
+    final int stockPerVariant = totalStock ~/ _localVariants.length;
+    final int remainder = totalStock % _localVariants.length;
+    setState(() {
+      for (var i = 0; i < _localVariants.length; i++) {
+        final stock = i < remainder ? stockPerVariant + 1 : stockPerVariant;
+        _localVariants[i] = _localVariants[i].copyWith(stock: stock);
+      }
+      widget.onVariantsChanged(_localVariants);
+    });
+  }
+
+  void _batchUpdatePrices(double priceModifier, bool isPercentage) {
+    setState(() {
+      _localVariants = _localVariants.map((variant) {
+        double newValue = isPercentage
+            ? variant.price.value * (1 + priceModifier / 100)
+            : variant.price.value + priceModifier;
+        return variant.copyWith(price: MoneyEntity(value: max(0, newValue)));
+      }).toList();
+      widget.onVariantsChanged(_localVariants);
+    });
+  }
+
+  void _batchUpdateDiscounts(double discountPercentage) {
+    setState(() {
+      _localVariants = _localVariants.map((variant) {
+        if (discountPercentage <= 0) {
+          return variant.copyWith(discountPrice: null);
+        }
+        final discountValue =
+            variant.price.value * (1 - discountPercentage / 100);
+        return variant.copyWith(
+          discountPrice: MoneyEntity(value: max(0, discountValue)),
+        );
+      }).toList();
+      widget.onVariantsChanged(_localVariants);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final displayVariants = _getFilteredVariants();
@@ -132,14 +191,41 @@ class _VariationCombinationsTableState
             VariationTableHeader(
               totalStock: _totalLocalStock,
               currentStock: widget.currentStock,
-              onGenerateSkus: () {},
-              onShowStockDistribution: () {},
-              onShowBatchPriceUpdate: () {},
-              onShowBatchDiscount: () {},
+              onGenerateSkus: _generateSkus,
+              onShowStockDistribution: () => _showDialog(
+                context,
+                BatchActionDialogs.stockDistributionDialog(
+                  context,
+                  onDistribute: _distributeStock,
+                ),
+              ),
+              onShowBatchPriceUpdate: () => _showDialog(
+                context,
+                BatchActionDialogs.batchPriceUpdateDialog(
+                  context,
+                  onUpdatePrices: _batchUpdatePrices,
+                ),
+              ),
+              onShowBatchDiscount: () => _showDialog(
+                context,
+                BatchActionDialogs.batchDiscountDialog(
+                  context,
+                  onUpdateDiscounts: _batchUpdateDiscounts,
+                ),
+              ),
             ),
+            SizedBox(height: AppTheme.spacingMedium),
+            Divider(
+              color: isDark ? AppTheme.dividerColor : Colors.grey.shade300,
+            ),
+            SizedBox(height: AppTheme.spacingSmall),
           ],
         ),
       ),
     );
+  }
+
+  void _showDialog(BuildContext context, Widget dialog) {
+    showDialog(context: context, builder: (context) => dialog);
   }
 }
