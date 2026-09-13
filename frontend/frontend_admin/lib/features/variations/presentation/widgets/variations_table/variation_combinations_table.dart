@@ -8,6 +8,7 @@ import 'package:frontend_admin/features/variations/domain/entities/product_varia
 import 'package:frontend_admin/features/variations/domain/entities/product_variations_entity.dart';
 import 'package:frontend_admin/features/variations/presentation/bloc/product_variant_bloc.dart';
 import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/batch_actions_dialog.dart';
+import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/filter_stats_header.dart';
 import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/stock_warning_banner.dart';
 import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/variation_filters.dart';
 import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/variation_table_header.dart';
@@ -219,6 +220,18 @@ class _VariationCombinationsTableState
               color: isDark ? AppTheme.dividerColor : Colors.grey.shade300,
             ),
             SizedBox(height: AppTheme.spacingSmall),
+            // Filter stats and clear button
+            FilterStatsHeader(
+              totalVariants: _localVariants.length,
+              displayedVariants: displayVariants.length,
+              hasFilters: _selectedSize != null || _selectedColor != null,
+              onClearFilters: () {
+                setState(() {
+                  _selectedColor = null;
+                  _selectedSize = null;
+                });
+              },
+            ),
           ],
         ),
       ),
