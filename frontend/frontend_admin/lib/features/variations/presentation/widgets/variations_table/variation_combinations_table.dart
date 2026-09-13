@@ -11,6 +11,7 @@ import 'package:frontend_admin/features/variations/presentation/widgets/variatio
 import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/filter_stats_header.dart';
 import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/stock_warning_banner.dart';
 import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/variation_filters.dart';
+import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/variation_table_body.dart';
 import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/variation_table_header.dart';
 
 class VariationCombinationsTable extends StatefulWidget {
@@ -145,6 +146,16 @@ class _VariationCombinationsTableState
     });
   }
 
+  void _updateVariant(int index, ProductVariantEntity updated) {
+    final masterIndex = _localVariants.indexWhere((v) => v.id == updated.id);
+    if (masterIndex != -1) {
+      setState(() {
+        _localVariants[masterIndex] = updated;
+        widget.onVariantsChanged(_localVariants);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final displayVariants = _getFilteredVariants();
@@ -234,6 +245,25 @@ class _VariationCombinationsTableState
             ),
 
             // Main data table
+            VariationTableBody(
+              variations: widget.variations,
+              variants: displayVariants,
+              allVariants: _localVariants,
+              basePrice: widget.basePrice,
+              editingPrice: _editingPrice,
+              editingStock: _editingStock,
+              editingSku: _editingSku,
+              editingDiscount: _editingDiscount,
+              onToggleEditingPrice: () =>
+                  setState(() => _editingPrice = !_editingPrice),
+              onToggleEditingStock: () =>
+                  setState(() => _editingStock = !_editingStock),
+              onToggleEditingSku: () =>
+                  setState(() => _editingSku = !_editingSku),
+              onToggleEditingDiscount: () =>
+                  setState(() => _editingDiscount = !_editingDiscount),
+              onUpdateVariant: _updateVariant,
+            ),
           ],
         ),
       ),

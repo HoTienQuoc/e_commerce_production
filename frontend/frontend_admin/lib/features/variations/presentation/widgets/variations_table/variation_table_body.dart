@@ -165,6 +165,10 @@ class VariationTableBody extends StatelessWidget {
                     isEditing: editingDiscount,
                     onChanged: (discount) {
                       if (discount == null) {
+                        onUpdateVariant(
+                          index,
+                          variant.copyWith(discountPrice: null),
+                        );
                       } else {
                         onUpdateVariant(
                           index,
