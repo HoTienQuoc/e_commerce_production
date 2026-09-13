@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variant_entity.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variations_entity.dart';
+import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/component/cell_components.dart';
 import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/edit_table_column_header.dart';
 
 class VariationTableBody extends StatelessWidget {
@@ -122,7 +123,21 @@ class VariationTableBody extends StatelessWidget {
                     ),
                   ),
                 ),
-                DataCell(VariationPriceCell),
+                DataCell(
+                  VariationPriceCell(
+                    variant: variant,
+                    basePrice: basePrice,
+                    isEditing: editingPrice,
+                    onChanged: (price) {
+                      onUpdateVariant(
+                        index,
+                        variant.copyWith(
+                          price: variant.price.copyWith(value: price),
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ],
             );
           }).toList(),
