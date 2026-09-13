@@ -157,6 +157,14 @@ class _VariationCombinationsTableState
   }
 
   @override
+  void didUpdateWidget(covariant VariationCombinationsTable oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.variants != oldWidget.variants) {
+      _updateLocalStateFromWidget();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final displayVariants = _getFilteredVariants();
     final stockDifference = widget.currentStock - _totalLocalStock;
@@ -264,6 +272,11 @@ class _VariationCombinationsTableState
                   setState(() => _editingDiscount = !_editingDiscount),
               onUpdateVariant: _updateVariant,
             ),
+            if (displayVariants.isEmpty)
+              Text(
+                "No variants to display",
+                style: TextStyle(color: AppTheme.negative),
+              ),
           ],
         ),
       ),

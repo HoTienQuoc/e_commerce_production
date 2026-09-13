@@ -8,6 +8,7 @@ import 'package:frontend_admin/features/variations/presentation/widgets/add_vari
 import 'package:frontend_admin/features/variations/presentation/widgets/product_sizes_section.dart';
 import 'package:frontend_admin/features/variations/presentation/widgets/update_stock_dialog.dart';
 import 'package:frontend_admin/features/variations/presentation/widgets/variation_list_section.dart';
+import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/variation_combinations_table.dart';
 
 class ProductVariationsManager extends StatefulWidget {
   final String productId;
@@ -178,6 +179,18 @@ class _ProductVariationsManagerState extends State<ProductVariationsManager> {
               SizedBox(height: AppTheme.spacingMedium),
               Text('Variation Combinations', style: AppTheme.headingMedium()),
               SizedBox(height: AppTheme.spacingMedium),
+
+              VariationCombinationsTable(
+                variations: variations,
+                variants: variants,
+                basePrice: widget.basePrice,
+                onVariantsChanged: (updatedVariants) {
+                  context.read<ProductVariantBloc>().add(
+                    LocalVariantsUpdatedEvent(updatedVariants),
+                  );
+                },
+                productId: widget.productId,
+              ),
             ],
           ],
         );

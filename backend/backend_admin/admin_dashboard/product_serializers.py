@@ -384,7 +384,10 @@ class ProductUpdateSerializer(ProductCreateSerializer):
         inventory_service.update_inventory_from_variants(instance, total_stock)
 
         # Clear product cache immediately after variant stock update
-
+        from admin_dashboard.services.products.product_service import ProductService
+        product_service = ProductService()
+        product_service.clear_product_cache(instance.id)
+        
 
 
     def _handle_variants(self, instance, variants_data):
@@ -435,6 +438,13 @@ class ProductUpdateSerializer(ProductCreateSerializer):
 
     def to_representation(self, instance):
         """Override to_presentation to include full nested data in the response after create(update operations)"""
+        # Clear cache for this product before returning representation
+        from admin_dashboard.services.products.product_service import ProductService
+        product_service = ProductService()
+        product_service.clear_product_cache(instance.id)
+
+        import time
+        self.context['cache_timestamp'] = time.time()
 
         # use the full serializer for the response
         serializer = ProductFullSerializer(instance, context = self.context)

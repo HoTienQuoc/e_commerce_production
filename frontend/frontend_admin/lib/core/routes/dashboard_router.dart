@@ -36,6 +36,7 @@ class DashboardRouter {
             basePrice: args['basePrice'] as double,
             currentStock: args['currentStock'] as int,
             initialVariants: args['variants'] as List<ProductVariantEntity>?,
+            initialSizes: args['sizes'] as List<String>,
           ),
           settings,
         );

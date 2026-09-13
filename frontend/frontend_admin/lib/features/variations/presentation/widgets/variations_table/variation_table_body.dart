@@ -57,6 +57,8 @@ class VariationTableBody extends StatelessWidget {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: DataTable(
+          headingRowColor: WidgetStateProperty.all(tableHeaderColor),
+          dividerThickness: 0.5,
           columns: [
             ...variations.map(
               (variation) => DataColumn(
@@ -112,6 +114,9 @@ class VariationTableBody extends StatelessWidget {
             final variant = entry.value;
             final isEven = entry.key % 2 == 0;
             return DataRow(
+              color: WidgetStateProperty.all(
+                isEven ? tableRowColor1 : tableRowColor2,
+              ),
               cells: [
                 ...variations.map(
                   (variation) => DataCell(

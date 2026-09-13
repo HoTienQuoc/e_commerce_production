@@ -9,7 +9,7 @@ class ProductVariationsScreen extends StatefulWidget {
   final String productId;
   final Map<String, List<String>> initialVariations;
   final List<ProductVariantEntity>? initialVariants;
-  final List<String> initialSizes;
+  final List<String>? initialSizes;
   final double basePrice;
   final int currentStock;
 
@@ -45,6 +45,7 @@ class _ProductVariationsScreenState extends State<ProductVariationsScreen>
         initialSizes: widget.initialSizes,
         basePrice: widget.basePrice,
         currentStock: widget.currentStock,
+        initialVariants: widget.initialVariants,
       ),
     );
     _animationController = AnimationController(

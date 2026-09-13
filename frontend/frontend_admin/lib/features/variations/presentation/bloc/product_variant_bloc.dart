@@ -251,18 +251,20 @@ class ProductVariantBloc
     if (state.variants == null) return;
     final productId = state.productId;
     if (productId.isEmpty) return;
-    final variantsList = state.variants!.map(
-      (v) => {
-        'id': v.id.contains('-') ? null : v.id,
-        'product': v.productId,
-        'attributes': v.attributes,
-        'sku': v.sku,
-        'price': v.price.value,
-        'discount_price': v.discountPrice?.value,
-        'stock': v.stock,
-        'image_id': v.image?.id,
-      },
-    );
+    final variantsList = state.variants!
+        .map(
+          (v) => {
+            'id': v.id.contains('-') ? null : v.id,
+            'product': v.productId,
+            'attributes': v.attributes,
+            'sku': v.sku,
+            'price': v.price.value,
+            'discount_price': v.discountPrice?.value,
+            'stock': v.stock,
+            'image_id': v.image?.id,
+          },
+        )
+        .toList();
     final variationsData = {
       'variations': state.variations
           .map((v) => {'name': v.name, 'values': v.values})

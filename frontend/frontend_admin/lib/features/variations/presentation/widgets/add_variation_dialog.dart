@@ -82,7 +82,7 @@ class _AddVariationDialogState extends State<AddVariationDialog> {
       ),
       child: AnimatedContainer(
         duration: Duration(milliseconds: 300),
-        constraints: BoxConstraints(maxHeight: 300, maxWidth: 480),
+        constraints: BoxConstraints(minHeight: 300, maxWidth: 480),
         padding: EdgeInsets.all(AppTheme.spacingLarge),
         child: Form(
           key: _formKey,

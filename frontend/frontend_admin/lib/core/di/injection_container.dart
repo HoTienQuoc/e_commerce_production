@@ -40,6 +40,16 @@ import 'package:frontend_admin/features/products/domain/usecases/update_product_
 import 'package:frontend_admin/features/products/domain/usecases/update_product_usecase.dart';
 import 'package:frontend_admin/features/products/presentation/bloc/product_details/product_details_bloc.dart';
 import 'package:frontend_admin/features/products/presentation/bloc/product_list/product_list_bloc.dart';
+import 'package:frontend_admin/features/variations/data/datasources/variant_remote_datasource.dart';
+import 'package:frontend_admin/features/variations/data/repositories/variant_repository_impl.dart';
+import 'package:frontend_admin/features/variations/domain/repositories/variant_repository.dart';
+import 'package:frontend_admin/features/variations/domain/usecases/create_product_variant.dart';
+import 'package:frontend_admin/features/variations/domain/usecases/delete_product_variant.dart';
+import 'package:frontend_admin/features/variations/domain/usecases/distribution_use_case.dart';
+import 'package:frontend_admin/features/variations/domain/usecases/get_product_variant.dart';
+import 'package:frontend_admin/features/variations/domain/usecases/manage_product_variants.dart';
+import 'package:frontend_admin/features/variations/domain/usecases/update_product_variants.dart';
+import 'package:frontend_admin/features/variations/presentation/bloc/product_variant_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -55,6 +65,8 @@ Future<void> init() async {
   _initProductFeature();
   // Category feature
   _initCategories();
+  // Product variants
+  _initProductVariantsFeature();
 }
 
 Future<void> _initCoreServices() async {
@@ -206,5 +218,38 @@ void _initCategories() {
       deleteCategory: sl(),
       updateCategory: sl(),
     ),
+  );
+}
+
+void _initProductVariantsFeature() {
+  //usecases
+  sl.registerLazySingleton(() => CreateProductVariant(sl()));
+  sl.registerLazySingleton(() => UpdateProductVariant(sl()));
+  sl.registerLazySingleton(() => DeleteProductVariant(sl()));
+  sl.registerLazySingleton(() => GetProductVariants(sl()));
+  sl.registerLazySingleton(() => DistributeProductStockUseCase(sl()));
+  sl.registerLazySingleton(() => ManageProductVariants(sl()));
+
+  // bloc
+
+  sl.registerFactory(
+    () => ProductVariantBloc(
+      getProductVariants: sl(),
+      createProductVariant: sl(),
+      updateProductVariant: sl(),
+      deleteProductVariant: sl(),
+      manageProductVariants: sl(),
+      distributeProductStockUseCase: sl(),
+    ),
+  );
+
+  // Repository
+  sl.registerLazySingleton<VariantRepository>(
+    () => VariantRepositoryImpl(remoteDatasource: sl(), networkInfo: sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<VariantRemoteDatasource>(
+    () => VariantRemoteDatasourceImpl(client: sl()),
   );
 }

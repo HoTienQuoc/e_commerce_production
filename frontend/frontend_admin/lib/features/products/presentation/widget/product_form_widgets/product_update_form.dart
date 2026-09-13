@@ -225,7 +225,7 @@ class _ProductUpdateFormState extends State<ProductUpdateForm> {
         'variants': _variants,
         'basePrice': double.tryParse(_priceController.text) ?? 0,
         'currentStock': int.tryParse(_stockController.text) ?? 0,
-        'size': _sizes,
+        'size': _sizes ?? [],
       },
     );
   }

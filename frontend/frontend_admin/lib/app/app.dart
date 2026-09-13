@@ -8,6 +8,7 @@ import 'package:frontend_admin/features/auth/presentation/pages/login_page.dart'
 import 'package:frontend_admin/features/category/presentation/bloc/category_bloc.dart';
 import 'package:frontend_admin/features/products/presentation/bloc/product_details/product_details_bloc.dart';
 import 'package:frontend_admin/features/products/presentation/bloc/product_list/product_list_bloc.dart';
+import 'package:frontend_admin/features/variations/presentation/bloc/product_variant_bloc.dart';
 
 class MyApp extends StatelessWidget {
   final AuthBloc authBloc;
@@ -25,6 +26,9 @@ class MyApp extends StatelessWidget {
           create: (context) => sl<ProductDetailsBloc>(),
         ),
         BlocProvider<CategoryBloc>(create: (context) => sl<CategoryBloc>()),
+        BlocProvider<ProductVariantBloc>(
+          create: (context) => sl<ProductVariantBloc>(),
+        ),
       ],
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {

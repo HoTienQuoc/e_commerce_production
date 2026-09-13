@@ -12,7 +12,7 @@ class InitializeVariationsDataEvent extends ProductVariantEvent {
   final String productId;
   final Map<String, List<String>> initialVariations;
   final List<ProductVariantEntity>? initialVariants;
-  final List<String> initialSizes;
+  final List<String>? initialSizes;
   final double basePrice;
   final int currentStock;
 

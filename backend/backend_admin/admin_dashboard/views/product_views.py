@@ -229,7 +229,7 @@ class AdminProductViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
         return self.image_service.delete_product_image(product.id, image.id)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['get'])
     def variants(self, request, pk=None):
         """Get all variants for a product"""
         product = self.get_object()
