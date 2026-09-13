@@ -232,6 +232,8 @@ class _VariationCombinationsTableState
                 });
               },
             ),
+
+            // Main data table
           ],
         ),
       ),

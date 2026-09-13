@@ -5,7 +5,6 @@ import 'package:frontend_admin/core/event_bus/app_event_bus.dart';
 import 'package:frontend_admin/features/products/domain/entities/money_entity.dart';
 import 'package:frontend_admin/features/products/domain/entities/product_entity.dart';
 import 'package:frontend_admin/features/products/domain/usecases/product_usecase.dart';
-import 'package:frontend_admin/features/products/presentation/bloc/product_list/product_list_bloc.dart';
 
 part 'product_details_event.dart';
 part 'product_details_state.dart';
