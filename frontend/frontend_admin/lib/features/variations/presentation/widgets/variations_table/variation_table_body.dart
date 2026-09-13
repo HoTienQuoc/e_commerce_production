@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
+import 'package:frontend_admin/features/products/domain/entities/money_entity.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variant_entity.dart';
 import 'package:frontend_admin/features/variations/domain/entities/product_variations_entity.dart';
 import 'package:frontend_admin/features/variations/presentation/widgets/variations_table/component/cell_components.dart';
@@ -135,6 +136,46 @@ class VariationTableBody extends StatelessWidget {
                           price: variant.price.copyWith(value: price),
                         ),
                       );
+                    },
+                  ),
+                ),
+                DataCell(
+                  VariationStockCell(
+                    variant: variant,
+                    isEditing: editingStock,
+                    onChanged: (stock) {
+                      if (stock != null) {
+                        onUpdateVariant(index, variant.copyWith(stock: stock));
+                      }
+                    },
+                  ),
+                ),
+                DataCell(
+                  VariationSkuCell(
+                    variant: variant,
+                    isEditing: editingSku,
+                    onChanged: (sku) {
+                      onUpdateVariant(index, variant.copyWith(sku: sku));
+                    },
+                  ),
+                ),
+                DataCell(
+                  VariationDiscountCell(
+                    variant: variant,
+                    isEditing: editingDiscount,
+                    onChanged: (discount) {
+                      if (discount == null) {
+                      } else {
+                        onUpdateVariant(
+                          index,
+                          variant.copyWith(
+                            discountPrice: MoneyEntity(
+                              value: discount,
+                              currency: variant.price.currency,
+                            ),
+                          ),
+                        );
+                      }
                     },
                   ),
                 ),
