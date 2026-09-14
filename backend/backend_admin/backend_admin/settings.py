@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'inventory',
     'recommendations',
     'admin_dashboard',
+    'ai_agents',
 ]
 
 MIDDLEWARE = [
