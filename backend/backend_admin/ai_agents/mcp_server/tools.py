@@ -130,4 +130,124 @@ class EcommerceMCPTools:
                 "total_records": 0,
             }
 
+    @staticmethod
+    def get_inventory_status_tool()->MCPTool:
+        return MCPTool(
+            name="get_inventory_status",
+            description="Get real-time inventory status including stock levels, alerts and recommendations",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "product ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "description": "Specific product IDs to check"
+                    },
+                    "category": {
+                        "type": "string",
+                        "description": "Filter by product category"
+                    },
+                    "alert_level": {
+                        "type": "string",
+                        "enum": ["low_stock", "out_of_stock", "in_stock", "overstocked", "all"],
+                        "description": "Type of inventory alerts to include"
+                    },
+                    "include_recommendations": {
+                        "type": "bool",
+                        "description": "Whether to include restock recommendations"
+                    }
+                }
+            }
+        )
+
+    @staticmethod
+    async def handle_inventory_status(args: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle inventory status tool call"""
+        product_ids = args.get('product_ids')
+        category = args.get("category")
+        alert_level = args.get("alert_level", "all")
+        include_recommendations = args.get("include_recommendations", False)
+
+        return await sync_to_async(EcommerceMCPTools._get_inventory_data)(product_ids, category, alert_level, include_recommendations)
+
+    @staticmethod
+    def _get_inventory_data(product_ids, category, alert_level, include_recommendations) -> Dict[str, Any]:
+        """Get inventory data with proper model relationships"""
+        try:
+            products_qs = Product.objects.select_related('category')
+            if product_ids:
+                products_qs = products_qs.filter(id__in = product_ids)
+            if category:
+                products_qs = products_qs.filter(category__name__icontains=category)
+            inventory_records = InventoryRecord.objects.filter(product__in = products_qs).select_related('product', 'product__category')
+
+            alerts = []
+
+            if alert_level in ["low_stock", "all"]:
+                low_stock_items = inventory_records.filter(current_stock__lte = F('low_stock_threshold'), current_stock__gt = 0)
+                alerts.extend([
+                    {
+                        "type": "low_stock",
+                        "product_id": str(inv.product.id),
+                        "product_name": inv.product.name,
+                        "current_stock": inv.current_stock,
+                        "threshold": inv.low_stock_threshold,
+                        "category": inv.product.category.name if inv.product.category else None
+                    } for inv in low_stock_items
+                ])
+
+            if alert_level in ["out_of_stock", "all"]:
+                out_of_stock_items = inventory_records.filter(current_stock = 0)
+                alerts.extend([
+                    {
+                        "type": "out_of_stock",
+                        "product_id": str(inv.product.id),
+                        "product_name": inv.product.name,
+                        "current_stock": 0,
+                        "threshold": inv.low_stock_threshold,
+                        "category": inv.product.category.name if inv.product.category else None
+                    } for inv in low_stock_items
+                ])
+            inventory_stats = inventory_records.aaggregate(total_products = Count('id'), total_stock_value = Sum(F('current_stock') * F('product__cost')))
+            result = {
+                "summary" : {
+                    "total_products": inventory_stats.get('total_products', 0), # pyright: ignore[reportAttributeAccessIssue]
+                    "total_stock_value": float(inventory_stats.get('total_stock_value', 0) or 0), # pyright: ignore[reportAttributeAccessIssue]
+                    "alert_count": len(alerts)
+                },
+                "alerts": alerts
+            }
+            if include_recommendations:
+                recommendations = []
+                for alert in alerts:
+                    if alert['type'] in ['low_stock', 'out_of_stock']:
+                        try:
+                            inventory = InventoryRecord.objects.get(product__id = alert['product_id'])
+                            recommendations.append({
+                                "product_id": alert['product_id'],
+                                "product_name": alert['product_name'],
+                                "recommended_quantity": inventory.reorder_quantity,
+                                "estimated_cost": float(inventory.product.cost * inventory.reorder_quantity),
+                                "priority": "high" if alert['type'] == 'out_of_stock' else "medium"
+                            })
+                        except InventoryRecord.DoesNotExist:
+                            continue
+                result["recommendations"] = recommendations
+            return result
+        except Exception as e:
+            logger.error(f"Error in _get_inventory_data: {str(e)}")
+            return {
+                "error": str(e),
+                "summary": {
+                    "total_products":0, 
+                    "total_stock_value": 0, 
+                    "alert_count": 0
+                },
+                "alerts": []
+            }
+
+    
+
 
