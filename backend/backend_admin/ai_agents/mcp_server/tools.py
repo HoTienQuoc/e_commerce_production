@@ -460,4 +460,125 @@ class EcommerceMCPTools:
             }
 
 
+    @staticmethod
+    def get_product_recommendations()->MCPTool:
+        """Tool for AI-powered product recommendations"""
+        return MCPTool(
+            name="get_product_recommendations",
+            description="Generate AI-powered product recommendations based on purchase history and behavior",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "customer_id": {
+                        "type": "integer",
+                        "description": "Customer ID to generate recommendations for",
+                    },
+                    "product_id": {
+                        "type": "integer",
+                        "description": "Product ID to final similar products for"
+                    },
+                    "category": {
+                        "type": "string",
+                        "description": "Product category to focus recommendations on"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Maximum number of recommendations to return"
+                    },
+                    "recommendation_type": {
+                        "type": "string",
+                        "enum": ["personal", "similar", "trending", "cross_sell", "up_sell"],
+                        "description": "Type of recommendation algorithm to use"
+                    }
+                }
+            }
+        )
+
+    @staticmethod
+    async def handle_product_recommendations(args:Dict[str, Any])->Dict[str, Any]:
+        """Handle product recommendations tool call"""
+        customer_id = args.get("customer_id")
+        product_id = args.get("product_id")
+        category = args.get("category")
+        limit = args.get("limit", 10)
+        recommendation_type = args.get("recommendation_type", "personal")
+
+        return await sync_to_async(EcommerceMCPTools._get_product_recommendations)(customer_id, product_id, category, limit, recommendation_type)
+
+
+    @staticmethod
+    def _get_product_recommendations(customer_id, product_id, category, limit, recommendation_type)->Dict[str, Any]:
+        """Get product recommendations (sync method)"""
+        recommendations = []
+        if recommendation_type == "personal" and customer_id:
+            # Get Customer's purchase history
+            customer_orders = Order.objects.filter(user_id=customer_id, status = 'completed').prefetch_related('items__product')
+
+            # Find products frequently bought together
+            purchased_products = set()
+
+            for order in customer_orders:
+                for item in order.items.all(): # pyright: ignore[reportAttributeAccessIssue]
+                    purchased_products.add(item.product.id)
+
+            # Get similar products based on category and price range
+            if purchased_products:
+                similar_products = Product.objects.filter(
+                    category__in = Product.objects.filter(id__in = purchased_products).values_list('category_id', flat=True)
+                ).exclude(id__in = purchased_products)[:limit]
+
+                recommendations = [
+                    {
+                        "product_id": p.id,
+                        "name": p.name,
+                        "price": float(p.price),
+                        "category": p.category.name if p.category else None,
+                        "reason": "Based on your purchase history"
+                    } for p in similar_products
+                ]
+            elif recommendation_type == "trending":
+                # Get trending products based on recent sales
+                trending = OrderItem.objects.filter(
+                    order__created_at__gte = timezone.now() - timedelta(days=30)
+                ).values('product__id', 'product__name', 'product__price').annotate(total_sold = Sum('quantity')).order_by('-total_sold')[:limit]
+
+                recommendations = [
+                    {
+                        "product_id": item['product__id'],
+                        "name": item['product__name'],
+                        "price": float(item['product__price']),
+                        "total_sold": item['total_sold'],
+                        "reason": "Trending product"
+                    } for item in trending
+                ]
+
+            elif recommendation_type == "similar" and product_id:
+                try:
+                    base_product = Product.objects.get(id = product_id)
+                    similar_products = Product.objects.filter(category = base_product.category).exclude(id=product_id)[:limit]
+
+                    recommendations = [
+                        {
+                            "product_id": p.id,
+                            "name": p.name,
+                            "price": float(p.price),
+                            "category": p.category.name if p.category else None,
+                            "reason": f"Similar to {base_product.name}"
+                        } for p in similar_products
+                    ]
+
+                except Product.DoesNotExist:
+                    pass
+
+            return {
+                "recommendation_type": recommendation_type,
+                "total_recommendations": len(recommendations),
+                "recommendations": recommendations
+            }
+
+
+
+
+
             
