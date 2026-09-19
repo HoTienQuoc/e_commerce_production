@@ -342,5 +342,122 @@ class EcommerceMCPTools:
                 }
                 for c in top_customers
             ]
-            
         return result
+
+
+    @staticmethod
+    def get_order_management_tool()->MCPTool:
+        return MCPTool(
+            name="get_order_management",
+            description="Manage and analyze order data including status, fulfillment and performance",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": ["pending", "processing", "shipped", "delivered", "cancelled", "all"],
+                        "description": "Filter orders by status"
+                    },
+                    "date_range": {
+                        "type": "object",
+                        "properties": {
+                            "start": {"type": "string", "format": "date"},
+                            "end": {"type": "string", "format": "date"}
+                        },
+                        "description": "Date range for orders"
+                    },
+                    "customer_id": {
+                        "type": "integer",
+                        "description": "Filter by specific customer"
+                    },
+                    "analytics": {
+                        "type": "boolean",
+                        "description": "Include order analytics"
+                    }
+                }
+            }
+        )
+
+
+    @staticmethod
+    async def handle_order_management(args: Dict[str, Any])->Dict[str, Any]:
+        """Handle order management tool call"""
+        status = args.get("status", "all")
+        date_range = args.get("date_range")
+        customer_id = args.get("customer_id")
+        analytics = args.get("analytics", False)
+        return await sync_to_async(EcommerceMCPTools._get_order_data)(status, date_range, customer_id, analytics)
+
+    @staticmethod
+    def _get_order_data(status, date_range, customer_id, analytics)->Dict[str, Any]:
+        """Get order data with proper status handling"""
+        try:
+            orders_qs = Order.objects.select_related('user').prefetch_related('items__product')
+
+            status_mapping = {
+                'pending': 'processing',
+                'shipped': 'in_transit',
+                'delivered': 'completed',
+                'cancelled': 'rejected'
+            }
+
+            if status != "all":
+                actual_status = status_mapping.get(status, status)
+                orders_qs = orders_qs.filter(status = actual_status)
+
+            if date_range:
+                if date_range.get('start'):
+                    start_date = datetime.fromisoformat(date_range['start'])
+                    orders_qs = orders_qs.filter(created_at__gte = start_date)
+
+                if date_range.get('end'):
+                    end_date = datetime.fromisoformat(date_range['end'])
+                    orders_qs = orders_qs.filter(created_at__lte = end_date)
+
+            if customer_id:
+                orders_qs = orders_qs.filter(user_id = customer_id)
+
+            result: Dict[str, Any] = {
+                "total_orders": orders_qs.count(),
+                "filters": {
+                    "status": status,
+                    "date_range": date_range,
+                    "customer_id": customer_id
+                } 
+            }
+
+            if analytics:
+                status_dist = orders_qs.values('status').annotate(count = Count('id')).order_by('-count')
+                result["status_distribution"] = list(status_dist)
+                revenue_stats = orders_qs.aggregate(total_revenue = Sum('total_amount'), avg_order_value = Avg('total_amount'))
+                result["revenue_analytics"] = {
+                    "total": float(revenue_stats.get('total_revenue', 0) or 0),
+                    "average_order_value": float(revenue_stats.get('avg_order_value', 0) or 0),
+                } 
+
+            recent_orders = orders_qs.order_by('-created_at')[:10]
+
+            result["recent_orders"] = [
+                {
+                    "id": str(order.id),
+                    "customer": order.user.username if order.user else "Guest",
+                    "status": order.status,
+                    "total_amount": float(order.total_amount),
+                    "created_at": order.created_at.isoformat(),
+                    "items_count": order.items.count() # pyright: ignore[reportAttributeAccessIssue]
+                }
+                for order in recent_orders
+            ]
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Error in _get_order_data: {str(e)}")
+            return {
+                "error": str(e),
+                "total_orders": 0,
+                "filters": {"status": status, "date_range": date_range, "customer_id": customer_id} 
+            }
+
+
+            
