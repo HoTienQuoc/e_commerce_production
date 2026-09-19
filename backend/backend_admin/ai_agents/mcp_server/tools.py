@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, cast
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models import Sum, Count, Avg, F, Q
@@ -248,6 +248,99 @@ class EcommerceMCPTools:
                 "alerts": []
             }
 
+
+    @staticmethod
+    def get_customer_insights_tool()->MCPTool:
+        return MCPTool(
+            name="get_customer_insights",
+            description="Analyze customer behavior, segmentation and lifetime value",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "segment": {
+                        "type": "string",
+                        "enum": ["high_value", "frequent_buyers", "new_customers", "at_risk", "all"],
+                        "description": "Customer segment to analyze"
+                    },
+                    "analysis_type": {
+                        "type": "string",
+                        "enum": ["ltv", "behavior", "demographics", "purchase_patterns"],
+                        "description": "Type of customer analysis"
+                    },
+                    "time_period": {
+                        "type": "string",
+                        "enum": ["30days",  "90days", "1year", "all_time"],
+                        "description": "Time period for analysis"
+                    }
+                }
+            }
+        )
     
 
+    @staticmethod
+    async def handle_customer_insights(args: Dict[str, Any])->Dict[str, Any]:
+        """Handle customer insights tool call"""
+        segment = args.get("segment", "all")
+        analysis_type = args.get("analysis_type", "behavior")
+        time_period = args.get("time_period", "90days")
+        return await sync_to_async(EcommerceMCPTools._get_customer_data)(segment, analysis_type, time_period)
 
+    @staticmethod
+    def _get_customer_data(segment, analysis_type, time_period)->Dict[str, Any]:
+        """Get customer data (sync method)"""
+        end_date = timezone.now()
+        if time_period == "30days":
+            start_date = end_date - timedelta(days=30)
+        elif time_period == "90days":
+            start_date = end_date - timedelta(days=90)
+        elif time_period == "1year":
+            start_date = end_date - timedelta(days=365)
+        else:
+            start_date = None
+
+        customers_qs = CustomUser.objects.filter(is_active = True)
+        customer_stats = customers_qs.annotate(total_orders = Count('orders'), total_spent = Sum('orders_total_amount'), avg_order_value = Avg('orders__total_amount')).filter(total_orders__gt = 0)
+
+        if start_date:
+            customer_stats = customer_stats.filter(orders__created_at__gte = start_date)
+
+        if segment == "high_value":
+            customer_stats = customer_stats.filter(total_spent__gte = 1000)
+        elif segment == "frequent_buyers":
+            customer_stats = customer_stats.filter(total_orders__gte = 5)
+        elif segment == "new_customers":
+            customer_stats = customer_stats.filter(date_joined__gte=timezone.now() - timedelta(days=30))
+
+        result: Dict[str, Any] = {
+            "segment": segment,
+            "analysis_type": analysis_type,
+            "time_period": time_period,
+            "total_customers": customer_stats.count()
+        }
+
+        if analysis_type == 'ltv':
+            ltv_stats = customer_stats.aggregate(
+                avg__ltv = Avg('total_spent'), 
+                total_ltv = Sum('total_spent'), 
+                avg_orders = Avg('total_orders')
+            )
+            result['lifetime_value'] = {
+                "average": float(ltv_stats.get('avg_ltv', 0) or 0),
+                "total": float(ltv_stats.get('total_ltv', 0) or 0),
+                "average_orders": float(ltv_stats.get('avg_orders', 0) or 0),
+            }
+
+        if analysis_type == "behavior":
+            top_customers = customer_stats.order_by('-total_spent')[:10]
+            result["top_customers"] = [
+                {
+                    "id": c.id, # pyright: ignore[reportAttributeAccessIssue]
+                    "username": c.username, 
+                    "total_orders": c.total_orders, # pyright: ignore[reportAttributeAccessIssue]
+                    "total_spent": float(c.total_spent or 0), # pyright: ignore[reportAttributeAccessIssue]
+                    "avg_order_value": float(c.avg_order_value or 0) # pyright: ignore[reportAttributeAccessIssue]
+                }
+                for c in top_customers
+            ]
+            
+        return result
