@@ -571,11 +571,105 @@ class EcommerceMCPTools:
                 except Product.DoesNotExist:
                     pass
 
-            return {
-                "recommendation_type": recommendation_type,
-                "total_recommendations": len(recommendations),
-                "recommendations": recommendations
+        return  {
+            "recommendation_type": recommendation_type,
+            "total_recommendations": len(recommendations),
+            "recommendations": recommendations
+        }
+
+    @staticmethod
+    def get_inventory_forecast_tool()->MCPTool:
+        """Tool for inventory forecasting and demand prediction"""
+        return MCPTool(
+            name="get_inventory_forecast",
+            description="Generate inventory forecasts and demand predictions based on historical data",
+            inputSchema= {
+                "type": "object",
+                "properties": {
+                    "product_id": {
+                        "type": "object",
+                        "description": "Specific product ID to forecast"
+                    },  
+                    "category": {
+                        "type": "string",
+                        "description": "Product category to forecast"
+                    },
+                    "forecast_days": {
+                        "type": "integer",
+                        "default": 30,
+                        "description": "Number of days to forecast ahead"
+                    },
+                    "historical_days": {
+                        "type": "integer",
+                        "default": 90,
+                        "description": "Number of historical days to analyze"
+                    },
+                    "include_season": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Whether to include seasonal patterns"
+                    }        
+                }
             }
+        )
+
+    @staticmethod
+    async def handle_inventory_forecast(args: Dict[str, Any])->Dict[str, Any]:
+        """Handle inventory forecast tool call"""
+        product_id = args.get("product_id")
+        category = args.get("category")
+        forecast_days = args.get("forecast_days", 30)
+        historical_days = args.get("historical_days", 90)
+        include_seasonality = args.get("include_seasonality", True)
+        return await sync_to_async(EcommerceMCPTools._get_inventory_forecast)(product_id, category, forecast_days, historical_days, include_seasonality)
+
+    @staticmethod
+    def _get_inventory_forecast(product_id, category, forecast_days, historical_days, include_seasonality)->Dict[str, Any]:
+        """Get inventory forecast (sync method)"""
+        end_date = timezone.now()
+        start_date = end_date - timedelta(days=historical_days)
+
+        if product_id:
+            products_qs = Product.objects.filter(id = product_id)
+        elif category:
+            products_qs = Product.objects.filter(category__name__icontains = category)
+        else:
+            products_qs = Product.objects.all()[:10]
+
+        forecasts = []
+
+        for product in products_qs:
+            historical_sales = OrderItem.objects.filter(product=product, order__created_at__gte = start_date, order__created_at__lte = end_date).values('order__created_at__date').annotate(daily_quantity = Sum('quantity')).order_by('order__created_at__date')
+
+            total_sold = sum(item['daily_quantity'] for item in historical_sales)
+
+            avg_daily_demand = total_sold / historical_days if historical_days > 0 else 0
+
+            forecast_demand = avg_daily_demand * forecast_days
+
+            current_stock = getattr(product.inventory, 'current_stock', 0) # pyright: ignore[reportAttributeAccessIssue]
+            days_until_stockout = current_stock / avg_daily_demand if avg_daily_demand > 0 else float('inf')
+
+            forecasts.append({
+                "product_id": product.id,
+                "product_name": product.name,
+                "current_stock": current_stock,
+                "avg_daily_demand": round(avg_daily_demand, 2),
+                "forecast_demand": round(forecast_demand, 2),
+                "days_until_stockout": min(days_until_stockout, 365),
+                "recommended_reorder": max(0, forecast_demand - current_stock),
+                "risk_level": "high" if days_until_stockout < 7 else "medium" if days_until_stockout < 30 else "low"
+            })
+
+        return {
+            "forecast_period": f"{forecast_days} days",
+            "historical_period": f"{historical_days} days",
+            "forecasts": forecasts
+        }
+
+
+
+
 
 
 
