@@ -162,7 +162,7 @@ class RateLimitExceededError(ChatAgentError):
     """Raised when rate limit is exceed"""
     def __init__(self, status: RateLimitStatus):
         self.status = status
-        super.__init__(f"Rate limit exceed. Reset in {status.seconds_until_reset}s")
+        super().__init__(f"Rate limit exceed. Reset in {status.seconds_until_reset}s")
 
 class ChatValidationError(ChatAgentError):
     """Raised when chat input validation false."""
