@@ -120,3 +120,80 @@ class ChatSession(models.Model):
         """Mark session as inactive"""
         self.is_active = False
         self.save(update_fields=['is_active', 'updated_at'])
+
+class ChatMessage(models.Model):
+    """Individual chat messages within sessions"""
+    INTENT_CHOICES = QueryIntent.choices()
+
+    # Message type choices
+    MESSAGE_TYPE_CHOICES = [
+        ('user', 'User Message'),
+        ('assitant', 'Assistant Response'),
+        ('system', 'System Message'),
+        ('error', 'Error Response')
+    ]
+
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled')
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    session = models.ForeignKey(
+        ChatSession, on_delete=models.CASCADE,
+        related_name='messages',
+        db_index=True
+    )
+    message_type = models.CharField(max_length=20, choices=MESSAGE_TYPE_CHOICES, default='user', db_index=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True)
+
+    # Message content
+    query = models.TextField(help_text="User's original query")
+    response = models.TextField(help_text="AI-generated response")
+    intent = models.CharField(
+        max_length=50, choices=INTENT_CHOICES, db_index=True, help_text="Classified intent of the query"
+    )
+
+    # Message threading
+    parent_message = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
+    execution_time = models.FloatField(default=0.0, help_text="Query processing time in seconds")
+    confidence_score = models.FloatField(default=0.0, help_text="AI confidence score (0-1)")
+    error_details = models.JSONField(default=dict, blank=True, help_text="Error details if processing failed")
+    metadata = models.JSONField(default=dict, blank=True, help_text="Additional message metadata")
+    is_edited = models.BooleanField(default=False)
+    edited_at = models.DateTimeField(null=True, blank=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    user_ip = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['session', '-created_at']),
+            models.Index(fields=['session', 'message_type', '-created_at']),
+            models.Index(fields=['intent', '-created_at']),
+            models.Index(fields=['confidence_score']),
+            models.Index(fields=['status', '-created_at']),
+            models.Index(fields=['user_id', '-created_at']),
+            models.Index(fields=['is_deleted', '-created_at']),
+            models.Index(fields=['session', 'is_deleted', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"Message {self.id} - {self.message_type} - {self.intent} - {self.created_at}"
+
+    def get_intent_display(self):
+        """Get human-readable intent name"""
+        return QueryIntent.get_display_name(self.intent)
+
+    @property
+    def response_preview(self):
+        """Get truncated response for display"""
+        return self.response[:100] + "..." if len(self.response) > 100 else self.response
+
+    
