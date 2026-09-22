@@ -196,4 +196,94 @@ class ChatMessage(models.Model):
         """Get truncated response for display"""
         return self.response[:100] + "..." if len(self.response) > 100 else self.response
 
+class ChatFeedback(models.Model):
+    """User feedback on chat responses"""
+    FEEDBACK_TYPES = [
+        ('positive', 'Positive'),
+        ('negative', 'Negative'),
+        ('neutral', 'Neutral')
+    ]
+
+    FEEDBACK_REASONS = [
+        ('helpful', 'Response was helpful'),
+        ('accurate', 'Information was accurate'),
+        ('fast', 'Response was fast'),
+        ('complete', 'Response was completed'),
+        ('irrelevant', 'Response was irrelevant'),
+        ('inaccurate', 'Information was inaccurate'),
+        ('slow', 'Response was tool slow'),
+        ('incomplete', 'Response was incomplete'),
+        ('unclear', 'Response was unclear'),
+        ('other', 'Other reason'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE, related_name='feedback')
+    user = models.ForeignKey('authentication.CustomUser', on_delete=models.CASCADE, related_name='chat_feedback')
+
+    # Feedback content
+    feedback_type = models.CharField(max_length=20, choices=FEEDBACK_TYPES)
+    rating = models.IntegerField(choices=[(i, f"{i} Star{'s' if i != 1 else ''}") for i in range(1, 6)], help_text="Rating from 1-5 stars")
+
+    reason = models.CharField(max_length=50, choices=FEEDBACK_REASONS, blank=True, help_text="Reason for the feedback")
+    comment = models.TextField(blank=True, max_length=1000, help_text="Optional detailed feedback comment")
+
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ['message', 'user']
+        indexes = [
+            models.Index(fields = ['feedback_type', '-created_at']),
+            models.Index(fields = ['rating', '-created_at']),
+            models.Index(fields = ['message', 'user']),
+            models.Index(fields = ['user', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"Feedback {self.feedback_type} ({self.rating}'*') - {self.message.id}"
+
+class ChatAnalytics(models.Model):
+    """Aggregated chat analytics data"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    data = models.DateField(db_index=True)
+    user = models.ForeignKey('authentication.CustomUser', on_delete=models.CASCADE, null=True, blank=True, related_name='chat_analytics')
+
+    # Usage metrics
+    total_queries = models.IntegerField(default=0)
+    total_sessions = models.IntegerField(default=0)
+    avg_response_time = models.FloatField(default=0.0)
+    avg_confidence_score = models.FloatField(default=0.0)
+
+    # Intent distribution
+    intent_distribution = models.JSONField(default=dict)
+
+    # Performance metrics
+    success_rate = models.FloatField(default=0.0)
+    error_rate = models.FloatField(default=0.0)
+
+    # User statisfaction
+    avg_rating = models.FloatField(null=True, blank=True)
+    feedback_count = models.IntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['date', 'user']
+        ordering = ['-date']
+        indexes = [
+            models.Index(fields=['date', 'user']),
+            models.Index(fields=['-date']),
+            models.Index(fields=['user', '-date']),
+        ]
+
+    def __str__(self):
+        user_str = f"- User {self.user.username}" if self.user else "- Global"
+        return f"Analytics {self.data}{user_str}"
+
     
+        
