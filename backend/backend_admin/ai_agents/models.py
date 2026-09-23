@@ -285,5 +285,54 @@ class ChatAnalytics(models.Model):
         user_str = f"- User {self.user.username}" if self.user else "- Global"
         return f"Analytics {self.data}{user_str}"
 
+
+class AgentRecommendation(models.Model):
+    """Store agent recommendations and actions"""
+    RECOMMENDATION_TYPES = [
+        ('restock', 'Restock Recommendation'),
+        ('price_change', 'Price Change Suggestion'),
+        ('marketing_campaign', 'Marketing Campaign'),
+        ('inventory_optimization', 'Inventory Optimization'),
+        ('customer_retention', 'Customer Retection Action'),
+        ('fraud_alert', 'Fraud Alert'),
+        ('content_update', 'Content Update'),
+    ]
+
+    PRIORITY_LEVELS = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('critical', 'Critical'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    agent = models.ForeignKey(Agent, on_delete=models.CASCADE, related_name='recommendations')
+    recommendation_type = models.CharField(max_length=50, choices=RECOMMENDATION_TYPES)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    priority = models.CharField(max_length=20, choices=PRIORITY_LEVELS, default='medium')
+
+    # Generic relation to any model
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
+    object_id = models.CharField(max_length=100, null=True, blank=True)
+    related_object = GenericForeignKey('content_type', 'object_id')
+
+    data = models.JSONField(default = dict)
+    confidence_score = models.FloatField(default=0.0)
+    estimated_impact = models.JSONField(default=dict)
+
+    is_approved = models.BooleanField(default=False)
+    is_implemented = models.BooleanField(default=False)
+
+    approved_by = models.ForeignKey('authentication.CustomUser', on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_recommendations')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-priority', '-created_at']
+        
+
+
+
     
         
