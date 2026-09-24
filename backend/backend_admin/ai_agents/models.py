@@ -21,7 +21,7 @@ class Agent(models.Model):
         ('recommendation_engine', 'Recommendation Engine')
     ]
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     agent_type = models.CharField(max_length=50, choices=AGENT_TYPES)
     description = models.TextField()
@@ -42,10 +42,7 @@ class Agent(models.Model):
         return (self.successful_executions / self.total_executions)*100
 
     def __str__(self):
-        return f"{self.name} ({self.get_agent_type_display()})"
-
-    def get_agent_type_display(self):
-        """"""
+        return f"{self.name} ({self.get_agent_type_display()})" # pyright: ignore[reportAttributeAccessIssue]
 
 
 class AgentExecution(models.Model):
@@ -165,6 +162,7 @@ class ChatMessage(models.Model):
     metadata = models.JSONField(default=dict, blank=True, help_text="Additional message metadata")
     is_edited = models.BooleanField(default=False)
     edited_at = models.DateTimeField(null=True, blank=True)
+    is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
     user_ip = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True)
@@ -179,7 +177,7 @@ class ChatMessage(models.Model):
             models.Index(fields=['intent', '-created_at']),
             models.Index(fields=['confidence_score']),
             models.Index(fields=['status', '-created_at']),
-            models.Index(fields=['user_id', '-created_at']),
+            models.Index(fields=['user_ip', '-created_at']),
             models.Index(fields=['is_deleted', '-created_at']),
             models.Index(fields=['session', 'is_deleted', '-created_at']),
         ]
@@ -194,7 +192,7 @@ class ChatMessage(models.Model):
     @property
     def response_preview(self):
         """Get truncated response for display"""
-        return self.response[:100] + "..." if len(self.response) > 100 else self.response
+        return (self.response[:100] + "..." if len(self.response) > 100 else self.response)
 
 class ChatFeedback(models.Model):
     """User feedback on chat responses"""
@@ -249,7 +247,7 @@ class ChatFeedback(models.Model):
 class ChatAnalytics(models.Model):
     """Aggregated chat analytics data"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    data = models.DateField(db_index=True)
+    date = models.DateField(db_index=True)
     user = models.ForeignKey('authentication.CustomUser', on_delete=models.CASCADE, null=True, blank=True, related_name='chat_analytics')
 
     # Usage metrics
@@ -283,7 +281,7 @@ class ChatAnalytics(models.Model):
 
     def __str__(self):
         user_str = f"- User {self.user.username}" if self.user else "- Global"
-        return f"Analytics {self.data}{user_str}"
+        return f"Analytics {self.data}{user_str}" # pyright: ignore[reportAttributeAccessIssue]
 
 
 class AgentRecommendation(models.Model):
