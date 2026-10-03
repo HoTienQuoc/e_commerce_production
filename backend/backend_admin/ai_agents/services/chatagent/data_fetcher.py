@@ -32,8 +32,7 @@ class DataFetcher:
             return await handler(query, context)
         except Exception as e:
             logger.error(f"Data fetching failed for intent {intent.value}: {str(e)}", exc_info=True)
-            raise DataFetchingError(f"Failed to fetch data for {intent.value}")
-            from e
+            raise DataFetchingError(f"Failed to fetch data for {intent.value}")from e
 
 
     async def _handle_inventory_status(self, query: str, context: ChatContext)->Dict[str,Any]:
