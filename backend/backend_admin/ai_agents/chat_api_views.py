@@ -444,6 +444,23 @@ class ChatHealthViewSet(viewsets.GenericViewSet):
                 'timestamp': timezone.now().isoformat(),
                 'error': 'Health check failed'
             }, status = status.HTTP_503_SERVICE_UNAVAILABLE,)
+        
+    @action(detail=False, methods=['get'])
+    def metrics(self, request):
+        """Get system metrics"""
+        try:
+            metrics_data = metrics_collector.get_metrics()
+            return Response({
+                'timestamp': timezone.now().isoformat(),
+                'metrics': metrics_data,
+                'uptime': self.get_uptime(),
+                'active_sessions': self.get_active_sessions_count()
+            })
+        except Exception as e:
+            logger.error(f"Metrics collection failed: {str(e)}", exc_info=True)
+            return Response({
+                'error': 'Metrics unavailable'
+            }, status = status.HTTP_503_SERVICE_UNAVAILABLE)
 
 
     def get_active_sessions_count(self)->int:
@@ -454,6 +471,15 @@ class ChatHealthViewSet(viewsets.GenericViewSet):
         ).distinct().count()
 
     
+    def get_uptime(self)->float:
+        """Get application uptime in seconds"""
+        uptime_key = 'app_start_time'
+        start_time = cache.get(uptime_key)
+
+        if not start_time:
+            start_time = timezone.now()
+            cache.set(uptime_key, start_time, timeout = None)
+        return (timezone.now() - start_time).total_seconds()
 
 
 
