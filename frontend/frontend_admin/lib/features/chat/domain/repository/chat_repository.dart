@@ -5,6 +5,7 @@ import 'package:frontend_admin/features/chat/domain/entities/chat_feedback_entit
 import 'package:frontend_admin/features/chat/domain/entities/chat_health_entity.dart';
 import 'package:frontend_admin/features/chat/domain/entities/chat_response_entity.dart';
 import 'package:frontend_admin/features/chat/domain/entities/chat_session_entity.dart';
+import 'package:frontend_admin/features/chat/domain/entities/paginated_message_entity.dart';
 import 'package:frontend_admin/features/chat/domain/entities/paginated_session_entity.dart';
 
 abstract class ChatRepository {
@@ -22,7 +23,7 @@ abstract class ChatRepository {
     required int page,
   });
 
-  Future<Either<Failure, PaginatedSessionEntity>> getSessionMessages(
+  Future<Either<Failure, PaginatedMessageEntity>> getSessionMessages(
     String sessionId, {
     required int page,
     required int pageSize,
