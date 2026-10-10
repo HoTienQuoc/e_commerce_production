@@ -1,6 +1,5 @@
 import 'package:frontend_admin/features/chat/data/models/service_check_model.dart';
 import 'package:frontend_admin/features/chat/domain/entities/chat_health_entity.dart';
-import 'package:frontend_admin/features/chat/domain/entities/service_check_entity.dart';
 
 class ChatHealthModel extends ChatHealthEntity {
   const ChatHealthModel({
