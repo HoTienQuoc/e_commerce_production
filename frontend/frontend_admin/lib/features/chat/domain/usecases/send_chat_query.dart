@@ -4,11 +4,11 @@ import 'package:frontend_admin/core/usecases/usecase.dart';
 import 'package:frontend_admin/features/chat/domain/entities/chat_response_entity.dart';
 import 'package:frontend_admin/features/chat/domain/repository/chat_repository.dart';
 
-class SendChatQuery
+class SendChatQueryUsecase
     implements UseCase<ChatResponseEntity, SendChatQueryParams> {
   final ChatRepository repository;
 
-  SendChatQuery(this.repository);
+  SendChatQueryUsecase(this.repository);
 
   @override
   Future<Either<Failure, ChatResponseEntity>> call(
@@ -27,5 +27,9 @@ class SendChatQueryParams {
   final String? sessionId;
   final Map<String, dynamic>? context;
 
-  const SendChatQueryParams(this.query, this.sessionId, this.context);
+  const SendChatQueryParams({
+    required this.query,
+    this.sessionId,
+    this.context,
+  });
 }

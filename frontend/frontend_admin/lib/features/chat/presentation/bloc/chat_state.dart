@@ -1,10 +1,4 @@
-import 'package:equatable/equatable.dart';
-import 'package:frontend_admin/core/errors/failure.dart';
-import 'package:frontend_admin/features/chat/domain/entities/chat_analytics_entity.dart';
-import 'package:frontend_admin/features/chat/domain/entities/chat_health_entity.dart';
-import 'package:frontend_admin/features/chat/domain/entities/chat_response_entity.dart';
-import 'package:frontend_admin/features/chat/domain/entities/chat_session_entity.dart';
-import 'package:frontend_admin/features/chat/domain/entities/paginated_message_entity.dart';
+part of 'chat_bloc.dart';
 
 enum ChatStatus { initial, loading, sending, loadingMore, success, failure }
 

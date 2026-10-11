@@ -5,11 +5,11 @@ import 'package:frontend_admin/core/usecases/usecase.dart';
 import 'package:frontend_admin/features/chat/domain/entities/chat_session_entity.dart';
 import 'package:frontend_admin/features/chat/domain/repository/chat_repository.dart';
 
-class CreatedChatSessionUsecase
+class CreateChatSessionUsecase
     implements UseCase<ChatSessionEntity, CreatedChatSessionParams> {
   final ChatRepository repository;
 
-  CreatedChatSessionUsecase(this.repository);
+  CreateChatSessionUsecase(this.repository);
 
   @override
   Future<Either<Failure, ChatSessionEntity>> call(

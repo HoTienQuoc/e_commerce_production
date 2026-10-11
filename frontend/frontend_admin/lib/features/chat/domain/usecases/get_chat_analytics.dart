@@ -5,11 +5,11 @@ import 'package:frontend_admin/core/usecases/usecase.dart';
 import 'package:frontend_admin/features/chat/domain/entities/chat_analytics_entity.dart';
 import 'package:frontend_admin/features/chat/domain/repository/chat_repository.dart';
 
-class GetChatAnalytics
+class GetChatAnalyticsUsecase
     implements UseCase<ChatAnalyticsEntity, GetChatAnalyticsParams> {
   final ChatRepository repository;
 
-  GetChatAnalytics(this.repository);
+  GetChatAnalyticsUsecase(this.repository);
 
   @override
   Future<Either<Failure, ChatAnalyticsEntity>> call(

@@ -1,4 +1,4 @@
-export 'created_chat_session_usecase.dart';
+export 'create_chat_session_usecase.dart';
 export 'get_chat_analytics.dart';
 export 'get_chat_health_usecase.dart';
 export 'get_chat_session_usecase.dart';

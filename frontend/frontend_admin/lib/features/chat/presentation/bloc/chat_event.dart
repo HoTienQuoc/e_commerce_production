@@ -1,5 +1,4 @@
-import 'package:equatable/equatable.dart';
-import 'package:frontend_admin/features/chat/domain/entities/chat_feedback_entity.dart';
+part of 'chat_bloc.dart';
 
 abstract class ChatEvent extends Equatable {
   const ChatEvent();
@@ -19,7 +18,7 @@ class GetChatSessions extends ChatEvent {
   List<Object?> get props => [isRefresh];
 }
 
-class GetMoreChatSession extends ChatEvent {}
+class GetMoreChatSessions extends ChatEvent {}
 
 class GetSessionMessages extends ChatEvent {
   final String sessionId;
