@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/features/chat/presentation/bloc/chat_bloc.dart';
+import 'package:frontend_admin/features/chat/presentation/widgets/chat_health_card.dart';
 
 class ChatDashboardPage extends StatefulWidget {
   const ChatDashboardPage({super.key});
@@ -246,7 +247,7 @@ class _ChatDashboardPageState extends State<ChatDashboardPage> {
         if (state.chatHealth == null) {
           return _buildErrorCard('No health data available');
         }
-        return ChatHealthCard();
+        return ChatHealthCard(health: state.chatHealth!);
       },
     );
   }
