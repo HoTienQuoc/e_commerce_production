@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/features/chat/presentation/bloc/chat_bloc.dart';
 import 'package:frontend_admin/features/chat/presentation/widgets/chat_health_card.dart';
+import 'package:frontend_admin/features/chat/presentation/widgets/chat_session_card.dart';
 
 class ChatDashboardPage extends StatefulWidget {
   const ChatDashboardPage({super.key});
@@ -272,7 +273,14 @@ class _ChatDashboardPageState extends State<ChatDashboardPage> {
           return _buildEmptyCard('No sessions available');
         }
         final recentSessions = state.sessions.take(5).toList();
-        return Column(...recentSessions.map((session) => ChatSessionCard()));
+        return Column(
+          children: [
+            ...recentSessions.map(
+              (session) => ChatSessionCard(session: session, onTap: () {}),
+            ),
+            if (state.sessions.length > 5) ...[const SizedBox()],
+          ],
+        );
       },
     );
   }
