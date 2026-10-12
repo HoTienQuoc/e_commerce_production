@@ -231,7 +231,74 @@ class _ChatDashboardPageState extends State<ChatDashboardPage> {
             ],
           ),
         ),
+        const SizedBox(width: 24),
+        Expanded(
+          flex: 3,
+          child: Column(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Recent Sessions', style: AppTheme.subheading()),
+                  const Spacer(),
+                  TextButton.icon(
+                    onPressed: () {
+                      // Navigate to sessions list or filter
+                    },
+                    icon: const Icon(Icons.filter_list, size: 18),
+                    label: const Text('Filter'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildSessionsList(),
+            ],
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _buildSessionsList() {
+    return BlocBuilder<ChatBloc, ChatState>(
+      builder: (context, state) {
+        if (state.status == ChatStatus.loading && state.sessions == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (state.status == ChatStatus.failure) {
+          return _buildErrorCard('Failed to load sessions');
+        }
+        if (state.sessions.isEmpty) {
+          return _buildEmptyCard('No sessions available');
+        }
+        final recentSessions = state.sessions.take(5).toList();
+        return Column(...recentSessions.map((session) => ChatSessionCard()));
+      },
+    );
+  }
+
+  Widget _buildEmptyCard(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppTheme.cardBackground,
+        borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+        border: Border.all(
+          color: AppTheme.borderColor.withAlpha((0.3 * 255).round()),
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.chat_bubble_outline, color: AppTheme.textMuted, size: 48),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: AppTheme.bodyLarge().copyWith(color: AppTheme.textMuted),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 
