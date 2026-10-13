@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/features/chat/presentation/bloc/chat_bloc.dart';
+import 'package:frontend_admin/features/chat/presentation/pages/chat_all_sessions_page.dart';
 import 'package:frontend_admin/features/chat/presentation/widgets/chat_health_card.dart';
 import 'package:frontend_admin/features/chat/presentation/widgets/chat_session_card.dart';
 
@@ -308,7 +309,17 @@ class _ChatDashboardPageState extends State<ChatDashboardPage> {
                         ),
                       ),
                     ),
-                    TextButton(onPressed: () {}, child: const Text('View All')),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ChatAllSessionsPage(),
+                          ),
+                        );
+                      },
+                      child: const Text('View All'),
+                    ),
                   ],
                 ),
               ),
