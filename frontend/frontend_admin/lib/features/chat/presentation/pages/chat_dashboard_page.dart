@@ -278,7 +278,41 @@ class _ChatDashboardPageState extends State<ChatDashboardPage> {
             ...recentSessions.map(
               (session) => ChatSessionCard(session: session, onTap: () {}),
             ),
-            if (state.sessions.length > 5) ...[const SizedBox()],
+            if (state.sessions.length > 5) ...[
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.accentBlue.withAlpha((0.1 * 255).round()),
+                  borderRadius: BorderRadius.circular(
+                    AppTheme.borderRadiusMedium,
+                  ),
+                  border: Border.all(
+                    color: AppTheme.accentBlue.withAlpha((0.3 * 255).round()),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: AppTheme.accentBlue,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Showing ${recentSessions.length} of ${state.sessions.length} sessions',
+                        style: AppTheme.bodyMedium().copyWith(
+                          color: AppTheme.accentBlue,
+                        ),
+                      ),
+                    ),
+                    TextButton(onPressed: () {}, child: const Text('View All')),
+                  ],
+                ),
+              ),
+            ],
           ],
         );
       },
