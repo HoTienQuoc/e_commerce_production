@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/features/chat/presentation/bloc/chat_bloc.dart';
+import 'package:frontend_admin/features/chat/presentation/widgets/chat_message_bubble.dart';
+import 'package:frontend_admin/features/chat/presentation/widgets/typing_widget.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -174,6 +176,24 @@ class _ChatScreenState extends State<ChatScreen> {
               state.messageStatus == MessageStatus.processing) {
             return _buildProcessingBubble();
           }
+          final message = messages[index];
+          // Determine message state for the bubble
+          MessageState? messageState;
+
+          if (message.id.startsWith('temp_')) {
+            switch (state.messageStatus) {
+              case MessageStatus.sending:
+                messageState = MessageState.sending;
+              case MessageStatus.processing:
+                messageState = MessageState.processing;
+                break;
+              case MessageStatus.failed:
+                messageState = MessageState.failed;
+                break;
+              default:
+                messageState = MessageState.sending;
+            }
+          }
         },
       ),
     );
@@ -258,7 +278,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        _buildTypingIndicator(),
+                        TypingWidget(),
                         const SizedBox(height: 12),
                         Row(
                           children: [
