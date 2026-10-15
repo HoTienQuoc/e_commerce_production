@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
+import 'package:frontend_admin/features/chat/domain/entities/chat_message_entity.dart';
 import 'package:frontend_admin/features/chat/presentation/bloc/chat_bloc.dart';
 import 'package:frontend_admin/features/chat/presentation/widgets/chat_message_bubble.dart';
 import 'package:frontend_admin/features/chat/presentation/widgets/typing_widget.dart';
@@ -42,6 +43,14 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  void _retryMessage(ChatMessageEntity message) {
+    if (message.intent == 'user_query') {
+      context.read<ChatBloc>().add(
+        SendChatQuery(message.query, sessionId: _currentSessionId),
+      );
+    }
+  }
+
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -52,6 +61,12 @@ class _ChatScreenState extends State<ChatScreen> {
         );
       });
     }
+  }
+
+  void _showFeedbackFor(String messageId) {
+    setState(() {
+      _feedbackMessageId = messageId;
+    });
   }
 
   @override
@@ -65,7 +80,7 @@ class _ChatScreenState extends State<ChatScreen> {
             child: BlocConsumer<ChatBloc, ChatState>(
               builder: (context, state) {
                 return Column(
-                  children: [Expanded(child: _buildChatArea(state))],
+                  children: [Expanded(child: _buildChatArea(state)), if (_feedbackMessageId != null) ],
                 );
               },
               listener: (context, state) {
@@ -184,6 +199,7 @@ class _ChatScreenState extends State<ChatScreen> {
             switch (state.messageStatus) {
               case MessageStatus.sending:
                 messageState = MessageState.sending;
+                break;
               case MessageStatus.processing:
                 messageState = MessageState.processing;
                 break;
@@ -194,6 +210,15 @@ class _ChatScreenState extends State<ChatScreen> {
                 messageState = MessageState.sending;
             }
           }
+          return ChatMessageBubble(
+            message: message,
+            onFeedback: () => _showFeedbackFor(message.id),
+            onRetry: messageState == MessageState.failed
+                ? () => _retryMessage(message)
+                : null,
+            showMetadata: message.intent != 'user_query',
+            showProcessingIndicator: false,
+          );
         },
       ),
     );
