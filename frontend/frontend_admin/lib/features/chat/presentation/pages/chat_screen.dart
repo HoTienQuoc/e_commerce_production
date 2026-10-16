@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/features/chat/domain/entities/chat_message_entity.dart';
 import 'package:frontend_admin/features/chat/presentation/bloc/chat_bloc.dart';
+import 'package:frontend_admin/features/chat/presentation/widgets/chat_feedback_widget.dart';
 import 'package:frontend_admin/features/chat/presentation/widgets/chat_message_bubble.dart';
 import 'package:frontend_admin/features/chat/presentation/widgets/typing_widget.dart';
 
@@ -69,6 +70,12 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  void _hideFeedback() {
+    setState(() {
+      _feedbackMessageId = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,7 +87,14 @@ class _ChatScreenState extends State<ChatScreen> {
             child: BlocConsumer<ChatBloc, ChatState>(
               builder: (context, state) {
                 return Column(
-                  children: [Expanded(child: _buildChatArea(state)), if (_feedbackMessageId != null) ],
+                  children: [
+                    Expanded(child: _buildChatArea(state)),
+                    if (_feedbackMessageId != null)
+                      ChatFeedbackWidget(
+                        messageId: _feedbackMessageId!,
+                        onFeedbackSubmitted: _hideFeedback,
+                      ),
+                  ],
                 );
               },
               listener: (context, state) {
