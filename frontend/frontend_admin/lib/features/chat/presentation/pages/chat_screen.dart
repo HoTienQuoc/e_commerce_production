@@ -4,6 +4,7 @@ import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/features/chat/domain/entities/chat_message_entity.dart';
 import 'package:frontend_admin/features/chat/presentation/bloc/chat_bloc.dart';
 import 'package:frontend_admin/features/chat/presentation/widgets/chat_feedback_widget.dart';
+import 'package:frontend_admin/features/chat/presentation/widgets/chat_input_widget.dart';
 import 'package:frontend_admin/features/chat/presentation/widgets/chat_message_bubble.dart';
 import 'package:frontend_admin/features/chat/presentation/widgets/typing_widget.dart';
 
@@ -94,6 +95,14 @@ class _ChatScreenState extends State<ChatScreen> {
                         messageId: _feedbackMessageId!,
                         onFeedbackSubmitted: _hideFeedback,
                       ),
+                    ChatInputWidget(
+                      sessionId: _currentSessionId,
+                      isLoading:
+                          state.messageStatus == MessageStatus.sending ||
+                          state.messageStatus == MessageStatus.processing,
+                      onSessionCreate: () =>
+                          context.read<ChatBloc>().add(CreateChatSession()),
+                    ),
                   ],
                 );
               },
