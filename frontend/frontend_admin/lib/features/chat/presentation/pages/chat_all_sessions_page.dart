@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/features/chat/presentation/bloc/chat_bloc.dart';
+import 'package:frontend_admin/features/chat/presentation/pages/chat_session_detail_page.dart';
 import 'package:frontend_admin/features/chat/presentation/widgets/chat_session_card.dart';
 
 class ChatAllSessionsPage extends StatefulWidget {
@@ -115,7 +116,18 @@ class _ChatAllSessionsPageState extends State<ChatAllSessionsPage> {
                   );
                 }
                 final session = state.sessions[index];
-                return ChatSessionCard(session: session, onTap: () {});
+                return ChatSessionCard(
+                  session: session,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            ChatSessionDetailPage(sessionId: session.sessionId),
+                      ),
+                    );
+                  },
+                );
               },
             );
           },

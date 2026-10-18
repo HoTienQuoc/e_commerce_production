@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend_admin/core/theme/theme.dart';
 import 'package:frontend_admin/features/chat/presentation/bloc/chat_bloc.dart';
 import 'package:frontend_admin/features/chat/presentation/pages/chat_all_sessions_page.dart';
+import 'package:frontend_admin/features/chat/presentation/pages/chat_analytics_page.dart';
+import 'package:frontend_admin/features/chat/presentation/pages/chat_screen.dart';
+import 'package:frontend_admin/features/chat/presentation/pages/chat_session_detail_page.dart';
 import 'package:frontend_admin/features/chat/presentation/widgets/chat_health_card.dart';
 import 'package:frontend_admin/features/chat/presentation/widgets/chat_session_card.dart';
 
@@ -71,13 +74,25 @@ class _ChatDashboardPageState extends State<ChatDashboardPage> {
             _buildActionButton(
               icon: Icons.chat,
               label: 'Open Chat',
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ChatScreen()),
+                );
+              },
             ),
             const SizedBox(width: 12),
             _buildActionButton(
               icon: Icons.analytics,
               label: 'Analytics',
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ChatAnalyticsPage(),
+                  ),
+                );
+              },
             ),
             const SizedBox(width: 12),
             _buildActionButton(
@@ -277,7 +292,18 @@ class _ChatDashboardPageState extends State<ChatDashboardPage> {
         return Column(
           children: [
             ...recentSessions.map(
-              (session) => ChatSessionCard(session: session, onTap: () {}),
+              (session) => ChatSessionCard(
+                session: session,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ChatSessionDetailPage(sessionId: session.sessionId),
+                    ),
+                  );
+                },
+              ),
             ),
             if (state.sessions.length > 5) ...[
               const SizedBox(height: 16),
