@@ -6,6 +6,7 @@ import 'package:frontend_admin/core/widget/dashboard_shell.dart';
 import 'package:frontend_admin/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:frontend_admin/features/auth/presentation/pages/login_page.dart';
 import 'package:frontend_admin/features/category/presentation/bloc/category_bloc.dart';
+import 'package:frontend_admin/features/chat/presentation/bloc/chat_bloc.dart';
 import 'package:frontend_admin/features/products/presentation/bloc/product_details/product_details_bloc.dart';
 import 'package:frontend_admin/features/products/presentation/bloc/product_list/product_list_bloc.dart';
 import 'package:frontend_admin/features/variations/presentation/bloc/product_variant_bloc.dart';
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
         BlocProvider<ProductVariantBloc>(
           create: (context) => sl<ProductVariantBloc>(),
         ),
+        BlocProvider<ChatBloc>(create: (_) => sl<ChatBloc>()),
       ],
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
