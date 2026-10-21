@@ -334,7 +334,7 @@ class Command(BaseCommand):
             )
             
             # Discounts are stored on variants in the current schema.
-            product._seed_discount_price = discount_price
+            product._seed_discount_price = discount_price # type: ignore
             products.append(product)
         
         return products
@@ -784,8 +784,8 @@ class Command(BaseCommand):
             sale_config = sale_types[i % len(sale_types)]
             
             # Calculate start and end dates
-            start_date = now + datetime.timedelta(days=sale_config['start_offset'])
-            end_date = start_date + datetime.timedelta(days=sale_config['duration'])
+            start_date = now + datetime.timedelta(days=sale_config['start_offset']) # type: ignore
+            end_date = start_date + datetime.timedelta(days=sale_config['duration']) # type: ignore
             
             # Create some sales in the past, present, and future for testing
             flash_sale = FlashSale.objects.create(
@@ -818,7 +818,7 @@ class Command(BaseCommand):
                 flash_sale.total_orders = random.randint(50, 500)
                 flash_sale.order_increase = Decimal(str(random.randint(10, 200)))
                 flash_sale.units_sold = random.randint(100, 1000)
-                flash_sale.units_sold_increase = Decimal(str(random.randint(10, 100)))
+                flash_sale.units_sold_increase = Decimal(str(random.randint(10, 100))) # type: ignore
                 flash_sale.conversion_rate = Decimal(str(random.randint(10, 50)))
                 flash_sale.conversion_rate_increase = Decimal(str(random.randint(-20, 100)))
                 flash_sale.save()
